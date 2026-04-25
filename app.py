@@ -533,6 +533,39 @@ section[data-testid="stSidebar"] [data-testid="stBaseButton-headerNoPadding"] {
   display: none !important;
 }
 
+/* ===== Sidebar navigation ===== */
+.nav-links { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.nav-link {
+  display: block;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text) !important;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none !important;
+  transition: all 0.12s;
+}
+.nav-link:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--accent) !important;
+}
+.nav-link-step { font-weight: 600; }
+.nav-link-sub {
+  font-size: 13px;
+  padding: 8px 14px 8px 28px;
+  font-weight: 500;
+}
+.nav-sublabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  margin: 14px 0 6px;
+  font-weight: 600;
+}
+
 /* ===== Step structure ===== */
 .step-block { margin: 56px 0 8px; padding-top: 32px; border-top: 2px solid var(--border); }
 .step-block.first { border-top: none; padding-top: 8px; margin-top: 16px; }
@@ -644,19 +677,7 @@ PRIMARY_TASK = {
     "query": "andrii bruiaka",
 }
 
-# Side queries — optional ad-hoc checks shown in the Raw queries view only.
-TASKS = [
-    PRIMARY_TASK,  # kept in TASKS so existing run_single / get_task flow works
-    # Companies
-    {"id": "co_oni", "group": "Companies", "label": "onicore", "engine": "google", "query": "onicore fintech"},
-    {"id": "co_nb", "group": "Companies", "label": "nonbank.io", "engine": "google", "query": "nonbank.io"},
-    {"id": "co_kolo", "group": "Companies", "label": "kolo wallet", "engine": "google", "query": "kolo crypto wallet"},
-    # Topic Authority
-    {"id": "tp_fin", "group": "Topic Authority", "label": "andrii bruiaka fintech", "engine": "google", "query": "andrii bruiaka fintech"},
-    {"id": "tp_crypto", "group": "Topic Authority", "label": "andrii bruiaka crypto UX", "engine": "google", "query": "andrii bruiaka crypto UX"},
-    {"id": "tp_pk", "group": "Topic Authority", "label": "andrii bruiaka passkey", "engine": "google", "query": "andrii bruiaka passkey"},
-    {"id": "tp_emb", "group": "Topic Authority", "label": "andrii bruiaka embedded finance", "engine": "google", "query": "andrii bruiaka embedded finance"},
-]
+TASKS = [PRIMARY_TASK]
 
 # ============================================================
 # PERSISTENCE
@@ -1216,14 +1237,6 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    st.session_state.view_mode = st.radio(
-        "View",
-        ["Strategy", "Raw queries"],
-        index=0 if st.session_state.view_mode == "Strategy" else 1,
-        horizontal=True,
-        label_visibility="collapsed",
-    )
-
     # Settings expander
     with st.expander("⚙ Settings", expanded=not has_key):
         api_input = st.text_input(
@@ -1273,79 +1286,23 @@ with st.sidebar:
             time.sleep(0.5)
             st.rerun()
 
-    st.markdown('<div class="section-label">Audit Battery</div>', unsafe_allow_html=True)
-
-    # Run all
-    if st.button(
-        "▶ RUN FULL AUDIT",
-        use_container_width=True,
-        disabled=not has_key,
-        type="primary",
-    ):
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        for i, task in enumerate(TASKS):
-            status_text.markdown(f'<div style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em">Running: {task["label"]}</div>', unsafe_allow_html=True)
-            run_single(task)
-            progress_bar.progress((i + 1) / len(TASKS))
-            time.sleep(0.25)
-        status_text.empty()
-        progress_bar.empty()
-        st.success("Audit complete")
-        time.sleep(0.5)
-        st.rerun()
-
-    # Custom query
-    with st.expander("+ Custom Query"):
-        custom_q = st.text_input("Query", key="custom_q_input")
-        custom_engine = "google"
-        if st.button("Run", key="run_custom", disabled=not has_key, use_container_width=True):
-            if custom_q.strip():
-                cid = f"custom_{len(st.session_state.custom_tasks) + 1}_{int(time.time())}"
-                ctask = {
-                    "id": cid,
-                    "group": "Custom",
-                    "label": custom_q.strip()[:40],
-                    "engine": custom_engine,
-                    "query": custom_q.strip(),
-                }
-                st.session_state.custom_tasks.append(ctask)
-                st.session_state.active_task_id = cid
-                run_single(ctask)
-                st.rerun()
-
-    # Task list — hide internal/primary group; only show side queries
-    groups = {}
-    for t in all_tasks:
-        if t["group"].startswith("_"):
-            continue
-        groups.setdefault(t["group"], []).append(t)
-
-    status_icons = {"idle": "○", "running": "◐", "ok": "●", "error": "✕"}
-
-    for group_name, tasks in groups.items():
-        st.markdown(f'<div class="task-group-label">{group_name}</div>', unsafe_allow_html=True)
-        for task in tasks:
-            status = st.session_state.task_status.get(task["id"], "idle")
-            icon = status_icons[status]
-
-            # Compute saturation if we have a result
-            sat_label = ""
-            if task["id"] in st.session_state.results:
-                result = st.session_state.results[task["id"]]
-                if "error" not in result:
-                    organic = (result.get("organic_results") or [])[:20]
-                    aligned = sum(
-                        1 for r in organic if classify(r, st.session_state.config) in ("owned", "earned")
-                    )
-                    sat_label = f"  {aligned}/{len(organic)}"
-
-            label_text = f"{icon}  {task['label'][:28]}{sat_label}"
-            if st.button(label_text, key=f"task_{task['id']}", use_container_width=True):
-                st.session_state.active_task_id = task["id"]
-                if task["id"] not in st.session_state.results and has_key:
-                    run_single(task)
-                st.rerun()
+    # Navigation — anchor links to sections
+    st.markdown(
+        """
+        <div class="section-label">Navigation</div>
+        <div class="nav-links">
+          <a href="#step-1-google" class="nav-link nav-link-step">01 · Google search</a>
+          <a href="#step-2-llm" class="nav-link nav-link-step">02 · LLM visibility</a>
+          <a href="#step-3-action" class="nav-link nav-link-step">03 · Action plan</a>
+          <div class="nav-sublabel">Action plan categories</div>
+          <a href="#cat-press" class="nav-link nav-link-sub">Articles &amp; press</a>
+          <a href="#cat-profiles" class="nav-link nav-link-sub">Profile sites</a>
+          <a href="#cat-owned" class="nav-link nav-link-sub">Owned web properties</a>
+          <a href="#cat-content" class="nav-link nav-link-sub">Content cadence</a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # ============================================================
@@ -1382,6 +1339,7 @@ def render_strategy():
     # STEP 1 — Google
     # ============================================================
     st.markdown(
+        '<a id="step-1-google"></a>'
         '<div class="step-block first">'
         '<div class="step-header"><div class="step-num">01</div><div class="step-title">Google search</div></div>'
         '<div class="step-subtitle">What do pages 1-3 (top 30) look like for "andrii bruiaka"? Each row is a SERP slot you either own, earn, or need to displace. Page 1 is what almost everyone sees; pages 2-3 are still in reach for someone digging.</div>'
@@ -1535,6 +1493,7 @@ def render_strategy():
     # STEP 2 — LLM
     # ============================================================
     st.markdown(
+        '<a id="step-2-llm"></a>'
         '<div class="step-block">'
         '<div class="step-header"><div class="step-num">02</div><div class="step-title">LLM visibility</div></div>'
         '<div class="step-subtitle">Does the AI search layer know who this is? What does it say, and which sources does it cite?</div>'
@@ -1615,6 +1574,7 @@ def render_strategy():
     # STEP 3 — Action plan
     # ============================================================
     st.markdown(
+        '<a id="step-3-action"></a>'
         '<div class="step-block">'
         '<div class="step-header"><div class="step-num">03</div><div class="step-title">Action plan</div></div>'
         '<div class="step-subtitle">Concrete tasks grouped by category. Mark status, paste the proof URL when each is published. Auto-detection flags items already showing on page 1 or in Perplexity citations.</div>'
@@ -1725,6 +1685,7 @@ def render_strategy():
 
         st.markdown(
             f"""
+            <a id="cat-{escape_html(cat_id)}"></a>
             <div class="category-header">
               <div class="category-title">{escape_html(category['title'])}</div>
               <div class="category-subtitle">{escape_html(category['subtitle'])}</div>
@@ -2059,15 +2020,4 @@ def render_task_result(task):
 
 
 # Render
-if st.session_state.view_mode == "Strategy":
-    render_strategy()
-else:
-    if st.session_state.active_task_id is None:
-        render_welcome()
-    else:
-        task = get_task(st.session_state.active_task_id)
-        if task:
-            render_task_result(task)
-        else:
-            st.session_state.active_task_id = None
-            render_welcome()
+render_strategy()
