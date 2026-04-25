@@ -668,6 +668,7 @@ def load_config():
         "perplexity_key": "",
         "owned_domains": DEFAULT_OWNED.copy(),
         "earned_domains": DEFAULT_EARNED.copy(),
+        "negative_domains": ["fintelegram.com"],
         "negatives": [],
     }
     if CONFIG_FILE.exists():
@@ -840,6 +841,9 @@ def classify(result, config):
     url = (result.get("link") or "").lower()
     if result_key(result) in (config.get("negatives") or []):
         return "negative"
+    for d in (config.get("negative_domains") or []):
+        if d and d.lower() in url:
+            return "negative"
     for d in config["owned_domains"]:
         if d and d.lower() in url:
             return "owned"
@@ -1245,6 +1249,12 @@ with st.sidebar:
             height=140,
             help="Target outlets you've published on or want to",
         )
+        negative_input = st.text_area(
+            "Negative Domains (one per line)",
+            value="\n".join(st.session_state.config.get("negative_domains", [])),
+            height=100,
+            help="Domains where any result auto-classifies as negative (e.g. watchdog/hit-piece sites)",
+        )
         if st.button("Save Settings", use_container_width=True):
             st.session_state.config["api_key"] = api_input.strip()
             st.session_state.config["perplexity_key"] = pplx_input.strip()
@@ -1253,6 +1263,9 @@ with st.sidebar:
             ]
             st.session_state.config["earned_domains"] = [
                 l.strip() for l in earned_input.split("\n") if l.strip()
+            ]
+            st.session_state.config["negative_domains"] = [
+                l.strip() for l in negative_input.split("\n") if l.strip()
             ]
             save_config(st.session_state.config)
             st.success("Saved")
