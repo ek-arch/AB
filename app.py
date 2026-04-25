@@ -507,6 +507,52 @@ label {
   color: var(--bg) !important;
 }
 
+/* Sidebar always visible — hide the collapse-arrow so user can't close it */
+[data-testid="stSidebarHeader"] button,
+[data-testid="stSidebar"] [data-testid="baseButton-headerNoPadding"],
+[data-testid="stSidebar"] button[kind="header"],
+button[data-testid="stBaseButton-headerNoPadding"] {
+  display: none !important;
+}
+
+/* If the sidebar still ends up collapsed (mobile, edge cases),
+   make the floating expand button impossible to miss */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"] {
+  background: var(--accent) !important;
+  color: var(--bg) !important;
+  width: auto !important;
+  min-width: 64px !important;
+  height: 48px !important;
+  padding: 0 16px !important;
+  border-radius: 0 !important;
+  top: 16px !important;
+  left: 16px !important;
+  z-index: 9999 !important;
+  border: 2px solid var(--accent) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+[data-testid="stSidebarCollapsedControl"] svg,
+[data-testid="collapsedControl"] svg {
+  color: var(--bg) !important;
+  fill: var(--bg) !important;
+  width: 22px !important;
+  height: 22px !important;
+}
+[data-testid="stSidebarCollapsedControl"]::after,
+[data-testid="collapsedControl"]::after {
+  content: "OPEN MENU";
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--bg);
+  text-transform: uppercase;
+}
+
 /* ===== Step structure ===== */
 .step-block { margin: 56px 0 8px; padding-top: 32px; border-top: 2px solid var(--border); }
 .step-block.first { border-top: none; padding-top: 8px; margin-top: 16px; }
