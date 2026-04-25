@@ -497,6 +497,61 @@ label {
 
 /* Hide Streamlit deploy button etc */
 [data-testid="stToolbar"] { display: none; }
+
+/* ===== Step structure ===== */
+.step-block { margin: 56px 0 8px; padding-top: 32px; border-top: 2px solid var(--border); }
+.step-block.first { border-top: none; padding-top: 8px; margin-top: 16px; }
+.step-header { display: flex; align-items: baseline; gap: 18px; margin-bottom: 4px; }
+.step-num {
+  font-family: 'Fraunces', serif;
+  font-size: 60px;
+  font-weight: 300;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.step-title {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 38px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.step-subtitle {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 4px 0 24px 78px;
+  line-height: 1.5;
+}
+
+/* Category subsection within Step 3 */
+.category-header {
+  margin: 36px 0 4px;
+  padding: 16px 0 0;
+  border-top: 1px dashed var(--border);
+}
+.category-header:first-of-type { border-top: none; padding-top: 8px; }
+.category-title {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 24px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.category-subtitle {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.task-topic {
+  font-style: italic;
+  color: var(--accent);
+  font-size: 14px;
+  margin: 6px 0;
+}
 </style>
 """
 
@@ -729,107 +784,289 @@ def classify(result, config):
 
 
 # ============================================================
-# GAP ANALYSIS
+# ACTION PLAN — categorized tasks
 # ============================================================
-TIER1_PRESS = ["finextra.com", "thefintechtimes.com", "sifted.eu", "bankingdive.com", "techcrunch.com", "forbes.com"]
-TIER2_PRESS = ["hackernoon.com", "coindesk.com", "cointelegraph.com", "decrypt.co", "theblock.co", "fintechfilter.com"]
+ACTION_CATEGORIES = [
+    {
+        "id": "press",
+        "title": "Articles & press placements",
+        "subtitle": "Each one is a page-1 SERP slot owned by a high-trust outlet, plus citation fodder for LLMs. Pitch concrete angles, not bios.",
+        "tasks": [
+            {
+                "label": "Finextra — bylined column or founder profile",
+                "priority": 1,
+                "topic": "\"How small fintechs rebuild infrastructure without 50-person engineering teams\" — drawn from Onicore",
+                "why": "Tier-1 fintech outlet. Always ranks page-1 for founder names.",
+                "action": "Email pitch to editor@finextra.com (or LinkedIn-DM the relevant editor). 200 words, 3 angle options, 1 concrete data point from Onicore.",
+                "domains": ["finextra.com"],
+            },
+            {
+                "label": "Sifted — founder profile",
+                "priority": 1,
+                "topic": "\"Eastern-European founders quietly rebuilding the EU fintech stack\" (you as one of 3-4)",
+                "why": "Read by EU VCs and journalists. Profile pieces rank for the name.",
+                "action": "Pitch news desk via tips@sifted.eu. Reference recent Sifted coverage to show fit.",
+                "domains": ["sifted.eu"],
+            },
+            {
+                "label": "The Fintech Times — guest contributor",
+                "priority": 1,
+                "topic": "\"Embedded finance is dead — long live infrastructure-as-a-service\" POV piece",
+                "why": "Easier to land than Finextra/Sifted, ranks well for founder name.",
+                "action": "Submit at thefintechtimes.com/contribute or email editor@thefintechtimes.com. They take strong opinion pieces.",
+                "domains": ["thefintechtimes.com"],
+            },
+            {
+                "label": "Banking Dive — interview or quote",
+                "priority": 2,
+                "topic": "Compliance / fraud prevention angle — quoteable on operational fintech infrastructure",
+                "why": "Tier-1 in US banking media. Quotes ride the name in search.",
+                "action": "Pitch yourself as a source on Help a B2B Writer / Featured. Or DM Banking Dive reporters on LinkedIn.",
+                "domains": ["bankingdive.com"],
+            },
+            {
+                "label": "Coindesk or Decrypt — bylined",
+                "priority": 2,
+                "topic": "\"Why crypto UX still fails: passkeys, recovery, and the seed-phrase problem\" — drawn from Kolo wallet work",
+                "why": "Crypto-native outlets index quickly and feed LLMs. Builds the crypto-UX angle of the brand.",
+                "action": "Pitch contribute@coindesk.com or contributors@decrypt.co with full draft + author bio.",
+                "domains": ["coindesk.com", "decrypt.co"],
+            },
+            {
+                "label": "HackerNoon — contributor profile + 2 articles",
+                "priority": 3,
+                "topic": "Technical post-mortems of building Onicore / Kolo. Long-form, code-light.",
+                "why": "Lowest bar of all tier-2 outlets. Author page itself ranks for the name.",
+                "action": "Sign up at hackernoon.com/contribute. Publish 2 pieces back-to-back so author page has weight.",
+                "domains": ["hackernoon.com"],
+            },
+            {
+                "label": "Podcast — Fintech Insider (11:FS)",
+                "priority": 1,
+                "topic": "\"Building fintech infrastructure outside the big-bank stack\"",
+                "why": "Industry-defining podcast. Episode show notes rank page-1 for guest names.",
+                "action": "Pitch via 11fs.com/podcast/contact. Reference 2 recent episodes you'd extend on.",
+                "domains": ["11fs.com"],
+            },
+            {
+                "label": "Podcast — This Week in Fintech",
+                "priority": 2,
+                "topic": "Founder spotlight or panel on embedded finance",
+                "why": "Weekly cadence + active newsletter audience.",
+                "action": "Email nik@thisweekinfintech.com with a 1-paragraph pitch.",
+                "domains": ["thisweekinfintech.com"],
+            },
+            {
+                "label": "TechCrunch / Forbes coverage",
+                "priority": 1,
+                "topic": "Onicore funding announcement, partnership, or product launch (news hook required)",
+                "why": "Single biggest entity-recognition trigger for Google. Once you have one, KG often follows.",
+                "action": "Don't pitch a profile cold — wait for a news hook (raise, partnership, customer milestone), then pitch via warm intro.",
+                "domains": ["techcrunch.com", "forbes.com"],
+            },
+        ],
+    },
+    {
+        "id": "profiles",
+        "title": "Profile sites — claim or register",
+        "subtitle": "Each profile = a SERP slot you control with your own copy. Most rank for the name within days. Free.",
+        "tasks": [
+            {
+                "label": "Wikidata entry",
+                "priority": 1,
+                "why": "Lower bar than Wikipedia. Feeds Google Knowledge Graph + read as authoritative by ChatGPT/Perplexity/Claude.",
+                "action": "Create at wikidata.org/wiki/Special:NewItem. Need ≥2 third-party reliable sources to cite (use any tier-1 press once landed).",
+                "domains": ["wikidata.org"],
+            },
+            {
+                "label": "Crunchbase person page",
+                "priority": 1,
+                "why": "Always ranks for founder names. Drives entity recognition. Links to founded companies.",
+                "action": "Sign up at crunchbase.com → create person → link Onicore, Nonbank.io, Kolo. Add headshot + bio + LinkedIn.",
+                "domains": ["crunchbase.com"],
+            },
+            {
+                "label": "AngelList / Wellfound founder profile",
+                "priority": 2,
+                "why": "Founder-focused, ranks well for the name + 'founder' qualifier.",
+                "action": "Sign up at wellfound.com → mark as founder → link companies.",
+                "domains": ["wellfound.com", "angel.co"],
+            },
+            {
+                "label": "F6S profile",
+                "priority": 2,
+                "why": "Startup-ecosystem directory, indexes fast.",
+                "action": "Create at f6s.com → list all ventures + investments + advisor roles.",
+                "domains": ["f6s.com"],
+            },
+            {
+                "label": "GitHub profile",
+                "priority": 2,
+                "why": "Easy 10-min win. Ranks for technical founder names. Read by LLMs.",
+                "action": "github.com/andriibruiaka — bio, link to bruiaka.com, pin 3 repos (even if just docs/specs).",
+                "domains": ["github.com"],
+            },
+            {
+                "label": "Speakerhub profile",
+                "priority": 2,
+                "why": "Pulls inbound podcast and conference invitations — feeds the press category.",
+                "action": "Sign up at speakerhub.com → list 3 talk topics matching the brand pillars (fintech infra, embedded finance, crypto UX).",
+                "domains": ["speakerhub.com"],
+            },
+            {
+                "label": "Hashnode author profile",
+                "priority": 3,
+                "why": "Indexes fast, ranks well for technical author names.",
+                "action": "hashnode.com → claim @andriibruiaka or similar. Cross-post 1 article.",
+                "domains": ["hashnode.com"],
+            },
+            {
+                "label": "Dev.to author profile",
+                "priority": 3,
+                "why": "Same as Hashnode — author page ranks.",
+                "action": "dev.to/andriibruiaka. Cross-post the same article (with canonical link to Substack).",
+                "domains": ["dev.to"],
+            },
+            {
+                "label": "Medium author profile",
+                "priority": 3,
+                "why": "medium.com/@<name> ranks page-1 for many founder names.",
+                "action": "Set vanity URL to @andriibruiaka. Cross-post 1 cornerstone article.",
+                "domains": ["medium.com"],
+            },
+            {
+                "label": "AllMyLinks profile",
+                "priority": 3,
+                "why": "Aggregator that ranks for the name. Acts as a meta-bio when nothing else exists.",
+                "action": "allmylinks.com/andriibruiaka — link every other profile here. 5-min setup.",
+                "domains": ["allmylinks.com"],
+            },
+            {
+                "label": "X / Twitter — verified handle, complete bio",
+                "priority": 2,
+                "why": "Profile cards appear in some Google name searches and feed Grok/ChatGPT.",
+                "action": "Confirm @ matches the brand. Bio with link to bruiaka.com. Verified ($8/mo) helps for entity recognition.",
+                "domains": ["twitter.com", "x.com"],
+            },
+            {
+                "label": "Reddit — earn karma, one organic mention",
+                "priority": 3,
+                "why": "LLMs (especially ChatGPT) rely heavily on Reddit. One thread can move AI answers.",
+                "action": "Build account karma by commenting in r/fintech, r/startups for 4 weeks. Then post a Show & Tell or AMA tied to a launch.",
+                "domains": ["reddit.com"],
+            },
+        ],
+    },
+    {
+        "id": "owned",
+        "title": "Owned web properties",
+        "subtitle": "Sites you fully control. Add Person schema markup for entity recognition; cross-link aggressively.",
+        "tasks": [
+            {
+                "label": "bruiaka.com — Person schema.org markup",
+                "priority": 1,
+                "why": "Tells Google explicitly 'this site is the person Andrii Bruiaka.' Single biggest on-page Knowledge Graph signal.",
+                "action": "Add JSON-LD Person schema to homepage with name, jobTitle, worksFor (Onicore), sameAs (LinkedIn, Substack, Crunchbase, Wikidata once live).",
+                "domains": [],
+            },
+            {
+                "label": "andriibruiaka.com — confirm ownership + add to owned list",
+                "priority": 1,
+                "why": "Perplexity already cites it. Make sure it's officially owned and matches brand.",
+                "action": "Add 'andriibruiaka.com' to Settings → Owned Domains in this dashboard. Add Person schema mirroring bruiaka.com.",
+                "domains": ["andriibruiaka.com"],
+            },
+            {
+                "label": "Cornerstone Substack post: \"Andrii Bruiaka — what I work on\"",
+                "priority": 1,
+                "topic": "Bio-style post with name in title, URL slug, and H1. Links to bruiaka.com and all owned profiles.",
+                "why": "Substack ranks fast and acts as a canonical bio answering 'who is...' queries.",
+                "action": "Title: \"Andrii Bruiaka: building fintech infrastructure\". URL slug: /p/andrii-bruiaka. Internal-link to all profile URLs.",
+                "domains": ["substack.com"],
+            },
+            {
+                "label": "Substack — author/about page with structured data",
+                "priority": 2,
+                "why": "About page is what LLMs hit for bio queries. Make it crawlable and entity-tagged.",
+                "action": "Substack 'About' → name in H1, professional bio (3 paragraphs), links to all founded companies + profiles.",
+                "domains": ["substack.com"],
+            },
+            {
+                "label": "Onicore.io — founder bio page linking back",
+                "priority": 2,
+                "why": "Reciprocal linking from company → founder strengthens the entity graph.",
+                "action": "/about page: dedicated bio block with name as H2, photo, link to bruiaka.com and LinkedIn.",
+                "domains": ["onicore.io", "onicore.ie"],
+            },
+            {
+                "label": "Nonbank.io — founder bio page linking back",
+                "priority": 2,
+                "why": "Same as Onicore — reciprocal entity signal.",
+                "action": "/about or /team — name as H2, link out to bruiaka.com.",
+                "domains": ["nonbank.io"],
+            },
+        ],
+    },
+    {
+        "id": "content",
+        "title": "Content cadence",
+        "subtitle": "Recurring rhythm. Treat each as a standing task — re-mark 'done' monthly.",
+        "tasks": [
+            {
+                "label": "Monthly Substack post (cornerstone)",
+                "priority": 1,
+                "topic": "Pillars: fintech infrastructure · embedded finance · crypto UX · passkeys / auth",
+                "why": "1 post/month at 1500+ words is the bare minimum for Substack ranking.",
+                "action": "Calendar 4 topics ahead. Each post: name in author + 1 mention in body + link to /about.",
+                "domains": ["substack.com"],
+            },
+            {
+                "label": "Monthly Medium cross-post",
+                "priority": 2,
+                "why": "Reach + author-page weight. Cross-post with canonical link back to Substack.",
+                "action": "After each Substack post, cross-post on Medium with rel=canonical to original.",
+                "domains": ["medium.com"],
+            },
+            {
+                "label": "Bi-weekly LinkedIn long-form",
+                "priority": 2,
+                "why": "LinkedIn long-form posts surface in Google for the name.",
+                "action": "1 long-form (1000+ words) every 2 weeks. Reuse Substack content trimmed.",
+                "domains": ["linkedin.com"],
+            },
+            {
+                "label": "Monthly podcast pitch (1 outbound)",
+                "priority": 1,
+                "why": "Forces a steady press cadence. Even 1 in 5 lands = 2-3 episodes/year, which moves both SERP and KG.",
+                "action": "Pick a podcast from the press category each month. Send pitch by 5th of month.",
+                "domains": [],
+            },
+            {
+                "label": "Monthly tier-1 outlet pitch",
+                "priority": 1,
+                "why": "Same logic as podcast: keep the funnel alive.",
+                "action": "Rotate Finextra → Sifted → Fintech Times → Banking Dive. One pitch every 4 weeks.",
+                "domains": [],
+            },
+            {
+                "label": "Quarterly Wikidata refresh",
+                "priority": 3,
+                "why": "Every new tier-1 press piece = a new sitelink to add as evidence.",
+                "action": "Once per quarter, add new press citations to the Wikidata entity. Keep statements current.",
+                "domains": ["wikidata.org"],
+            },
+        ],
+    },
+]
 
 
-def evaluate_gaps(organic_results, kg_present, perplexity_mentions):
-    """Check page 1 of name query for SERP-domination signals."""
-    top10 = organic_results[:10]
-    urls = " ".join((r.get("link") or "").lower() for r in top10)
-
-    linkedin_top = any(
-        "linkedin.com/in/" in (r.get("link") or "").lower() for r in top10[:3]
-    )
-
-    return [
-        {
-            "label": "Knowledge Graph panel",
-            "present": kg_present,
-            "why": "Single biggest signal Google has built an 'entity' for this person. Drives the right-rail card and feeds LLM grounding.",
-            "action": "Create Wikidata entry → add author schema on bruiaka.com → land 1 tier-1 press piece. Triangulation of these three usually triggers KG.",
-            "priority": 1,
-        },
-        {
-            "label": "Wikidata entry",
-            "present": "wikidata.org" in urls,
-            "why": "Lower bar than Wikipedia. Feeds Knowledge Graph and is read by ChatGPT/Perplexity as authoritative.",
-            "action": "Create at wikidata.org/wiki/Special:NewItem. Needs ≥2 reliable third-party sources cited.",
-            "priority": 1,
-        },
-        {
-            "label": "Wikipedia article",
-            "present": "wikipedia.org/wiki/" in urls,
-            "why": "Almost always page-1 result for a name. Highest-trust source for LLMs.",
-            "action": "Needs notability — 3+ independent press pieces first. Don't self-create; have a third party draft once press exists.",
-            "priority": 2,
-        },
-        {
-            "label": "Tier-1 fintech press piece",
-            "present": any(d in urls for d in TIER1_PRESS),
-            "why": "Authoritative outlet bylined or profiled = page-1 owned by trusted brand, plus citation fodder for LLMs.",
-            "action": "Pitch profile or guest column to Finextra, Sifted, The Fintech Times, Banking Dive. Lead with concrete wins (Onicore, Nonbank.io, Kolo).",
-            "priority": 1,
-        },
-        {
-            "label": "Tier-2 industry press",
-            "present": any(d in urls for d in TIER2_PRESS),
-            "why": "Easier to land than tier-1, still adds citation depth.",
-            "action": "Cross-publish or contribute to HackerNoon, Coindesk, Decrypt, etc. with author profile pages.",
-            "priority": 3,
-        },
-        {
-            "label": "Crunchbase person page",
-            "present": "crunchbase.com/person/" in urls or "crunchbase.com" in urls,
-            "why": "Always ranks for founder names. Feeds entity recognition.",
-            "action": "Claim/create at crunchbase.com. Link to all founded companies.",
-            "priority": 2,
-        },
-        {
-            "label": "LinkedIn in top 3",
-            "present": linkedin_top,
-            "why": "Default for any professional name search — should be position 1 or 2.",
-            "action": "Set vanity URL to /in/andriibruiaka, fill all sections, get 5+ recommendations to push ranking.",
-            "priority": 2,
-        },
-        {
-            "label": "Substack indexed for name",
-            "present": "substack.com" in urls,
-            "why": "Owned content that ranks = direct SERP control with your message.",
-            "action": "Publish 2 cornerstone posts with 'Andrii Bruiaka' in the title and URL slug. One bio post, one POV piece.",
-            "priority": 2,
-        },
-        {
-            "label": "Medium / Dev.to / Hashnode bylined",
-            "present": any(d in urls for d in ["medium.com", "dev.to", "hashnode.com"]),
-            "why": "These platforms rank well for author pages and are LLM-friendly.",
-            "action": "Cross-post 1 cornerstone article on Medium with author URL = name. Set up Hashnode + Dev.to author profiles.",
-            "priority": 3,
-        },
-        {
-            "label": "GitHub profile",
-            "present": "github.com/" in urls,
-            "why": "Easy 10-minute win. Ranks for technical founder names.",
-            "action": "Set up github.com/andriibruiaka with bio, link to bruiaka.com, pin 3 repos.",
-            "priority": 3,
-        },
-        {
-            "label": "Reddit organic mention",
-            "present": "reddit.com" in urls,
-            "why": "LLMs (especially ChatGPT) lean heavily on Reddit. One discussion can move both Google and AI search.",
-            "action": "Get one organic mention in r/fintech / r/startups (project Show & Tell, AMA, or third-party share). Don't self-promote thinly.",
-            "priority": 3,
-        },
-        {
-            "label": "Mentioned by Perplexity",
-            "present": perplexity_mentions,
-            "why": "Direct signal that the AI search layer 'knows' him. Driven by citations, so it improves as press lands.",
-            "action": "Will improve automatically as Wikidata + tier-1 press land. Re-check monthly.",
-            "priority": 2,
-        },
-    ]
+def auto_check_task(task, urls_blob, citations_blob):
+    """A task auto-marks 'done' if any of its check domains appears in SERP or Perplexity citations."""
+    domains = task.get("domains") or []
+    if not domains:
+        return False
+    haystack = urls_blob + " " + citations_blob
+    return any(d.lower() in haystack for d in domains if d)
 
 
 # ============================================================
@@ -1044,8 +1281,8 @@ def render_strategy():
           <div class="query-text">andrii bruiaka</div>
           <div class="query-meta">
             <span>Goal · <strong>OWN PAGE 1 WITH POSITIVE CONTENT</strong></span>
-            <span>Engine · <strong>GOOGLE</strong></span>
-            <span class="accent">SERP · LLM · Action plan</span>
+            <span>Engine · <strong>GOOGLE + LLMs</strong></span>
+            <span class="accent">3 steps · measure · then act</span>
           </div>
         </div>
         """,
@@ -1056,26 +1293,29 @@ def render_strategy():
         st.warning("Add SerpAPI key in Settings to begin.")
         return
 
-    cols = st.columns([1, 1])
-    with cols[0]:
-        if st.button("▶ Refresh Google name search", use_container_width=True, type="primary"):
-            run_single(primary_task)
-            st.rerun()
-    with cols[1]:
-        if has_pplx:
-            if st.button("▶ Refresh Perplexity probe", use_container_width=True):
-                run_perplexity()
-                st.rerun()
-        else:
-            st.caption("Add Perplexity key in Settings to enable LLM probe.")
-
     serp_result = st.session_state.results.get(primary_task["id"]) if primary_task else None
     pplx_result = st.session_state.perplexity_result
 
-    if not serp_result or "error" in (serp_result or {}):
-        st.info("Click 'Refresh Google name search' to load page 1 data.")
-        if serp_result and "error" in serp_result:
-            st.error(serp_result["error"])
+    # ============================================================
+    # STEP 1 — Google
+    # ============================================================
+    st.markdown(
+        '<div class="step-block first">'
+        '<div class="step-header"><div class="step-num">01</div><div class="step-title">Google search</div></div>'
+        '<div class="step-subtitle">What does page 1 look like for "andrii bruiaka"? Each row is a SERP slot you either own, earn, or need to displace.</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    if st.button("▶ Refresh Google name search", use_container_width=True, type="primary"):
+        run_single(primary_task)
+        st.rerun()
+
+    if not serp_result:
+        st.info("Click 'Refresh Google name search' above to load page 1 data.")
+        return
+    if "error" in serp_result:
+        st.error(serp_result["error"])
         return
 
     organic = (serp_result.get("organic_results") or [])[:10]
@@ -1086,12 +1326,70 @@ def render_strategy():
     total = len(organic) or 1
     kg_present = bool(serp_result.get("knowledge_graph"))
 
-    # ---------- Verdict bar ----------
     google_status = (
         ("strong", "var(--good)") if aligned >= 7
         else ("moderate", "var(--warn)") if aligned >= 4
         else ("weak", "var(--bad)")
     )
+    kg_status = ("present", "var(--good)") if kg_present else ("missing", "var(--bad)")
+
+    st.markdown(
+        f"""
+        <div class="saturation-card" style="grid-template-columns: 1fr 1fr; gap: 32px;">
+          <div>
+            <div class="saturation-label">Page 1 saturation</div>
+            <div class="saturation-number" style="color: {google_status[1]};">{aligned}<span>/{total}</span></div>
+            <div class="saturation-label" style="color: {google_status[1]};">{google_status[0]} — {counts['owned']} owned · {counts['earned']} earned · {counts['neutral']} neutral · {counts['negative']} negative</div>
+          </div>
+          <div>
+            <div class="saturation-label">Knowledge Graph (entity card)</div>
+            <div class="saturation-number" style="font-size: 42px; color: {kg_status[1]};">{kg_status[0]}</div>
+            <div class="saturation-label">Single biggest signal Google built an entity for this person</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.expander(f"Page 1 results · {len(organic)} ranked", expanded=True):
+        for i, r in enumerate(organic):
+            cls = classify(r, st.session_state.config)
+            title = escape_html(r.get("title") or "Untitled")
+            link = r.get("link") or ""
+            displayed = escape_html(r.get("displayed_link") or link)
+            snippet = escape_html((r.get("snippet") or "")[:160])
+            st.markdown(
+                f"""
+                <div class="result-row">
+                  <div class="result-pos">{i+1:02d}</div>
+                  <div class="result-body">
+                    <div class="result-title">{title}</div>
+                    <div class="result-link"><a href="{escape_html(link)}" target="_blank" rel="noopener">{displayed}</a></div>
+                    {f'<div class="result-snippet">{snippet}</div>' if snippet else ''}
+                  </div>
+                  <div class="tag {cls}">{cls}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    # ============================================================
+    # STEP 2 — LLM
+    # ============================================================
+    st.markdown(
+        '<div class="step-block">'
+        '<div class="step-header"><div class="step-num">02</div><div class="step-title">LLM visibility</div></div>'
+        '<div class="step-subtitle">Does the AI search layer know who this is? What does it say, and which sources does it cite?</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    if has_pplx:
+        if st.button("▶ Refresh Perplexity probe", use_container_width=True):
+            run_perplexity()
+            st.rerun()
+    else:
+        st.caption("Add Perplexity key in Settings (or Streamlit Secrets) to enable LLM probe.")
 
     pplx_mentioned = False
     pplx_owned_cited = 0
@@ -1099,8 +1397,7 @@ def render_strategy():
     pplx_citations = []
     if pplx_result and "error" not in pplx_result:
         pplx_answer, pplx_citations = parse_perplexity(pplx_result)
-        name_l = "bruiaka"
-        pplx_mentioned = name_l in pplx_answer.lower()
+        pplx_mentioned = "bruiaka" in pplx_answer.lower()
         owned = st.session_state.config.get("owned_domains", [])
         for url in pplx_citations:
             ul = url.lower()
@@ -1112,184 +1409,175 @@ def render_strategy():
     elif "error" in (pplx_result or {}):
         pplx_status = ("error", "var(--bad)")
     elif pplx_mentioned:
-        pplx_status = (f"mentioned · {pplx_owned_cited} owned cited", "var(--good)" if pplx_owned_cited else "var(--warn)")
+        pplx_status = (
+            f"mentioned · {pplx_owned_cited} owned cited",
+            "var(--good)" if pplx_owned_cited else "var(--warn)",
+        )
     else:
         pplx_status = ("not mentioned", "var(--bad)")
 
-    kg_status = ("present", "var(--good)") if kg_present else ("missing", "var(--bad)")
-
     st.markdown(
         f"""
-        <div class="saturation-card" style="grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
+        <div class="saturation-card" style="grid-template-columns: 1fr 1fr; gap: 32px;">
           <div>
-            <div class="saturation-label">Google name search</div>
-            <div class="saturation-number" style="color: {google_status[1]};">{aligned}<span>/{total}</span></div>
-            <div class="saturation-label" style="color: {google_status[1]};">{google_status[0]}</div>
-          </div>
-          <div>
-            <div class="saturation-label">Perplexity (LLM)</div>
-            <div class="saturation-number" style="font-size: 38px; color: {pplx_status[1]};">{pplx_status[0]}</div>
+            <div class="saturation-label">Perplexity (sonar)</div>
+            <div class="saturation-number" style="font-size: 36px; color: {pplx_status[1]};">{pplx_status[0]}</div>
             <div class="saturation-label">probe: "Who is Andrii Bruiaka?"</div>
           </div>
           <div>
-            <div class="saturation-label">Knowledge Graph</div>
-            <div class="saturation-number" style="font-size: 38px; color: {kg_status[1]};">{kg_status[0]}</div>
-            <div class="saturation-label">Google entity card</div>
+            <div class="saturation-label">ChatGPT · Claude · Gemini</div>
+            <div class="saturation-number" style="font-size: 28px; color: var(--muted);">not yet wired</div>
+            <div class="saturation-label">add OpenAI / Anthropic / Google keys to extend</div>
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # ---------- Page 1 breakdown ----------
-    st.markdown(
-        f'<div class="section-title">Page 1 breakdown <small>{total} results · {aligned} aligned</small></div>',
-        unsafe_allow_html=True,
-    )
-    for i, r in enumerate(organic):
-        cls = classify(r, st.session_state.config)
-        title = escape_html(r.get("title") or "Untitled")
-        link = r.get("link") or ""
-        displayed = escape_html(r.get("displayed_link") or link)
-        snippet = escape_html((r.get("snippet") or "")[:160])
-        st.markdown(
-            f"""
-            <div class="result-row">
-              <div class="result-pos">{i+1:02d}</div>
-              <div class="result-body">
-                <div class="result-title">{title}</div>
-                <div class="result-link"><a href="{escape_html(link)}" target="_blank" rel="noopener">{displayed}</a></div>
-                {f'<div class="result-snippet">{snippet}</div>' if snippet else ''}
-              </div>
-              <div class="tag {cls}">{cls}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    # ---------- Perplexity detail ----------
     if pplx_result and "error" not in pplx_result:
-        st.markdown(
-            f'<div class="section-title">What Perplexity says <small>{len(pplx_citations)} citations</small></div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f'<div class="kg-card"><div class="kg-desc">{escape_html(pplx_answer)}</div></div>',
-            unsafe_allow_html=True,
-        )
-        if pplx_citations:
-            with st.expander(f"Citations ({len(pplx_citations)})"):
+        with st.expander(f"What Perplexity says · {len(pplx_citations)} citations", expanded=True):
+            st.markdown(
+                f'<div class="kg-card"><div class="kg-desc">{escape_html(pplx_answer)}</div></div>',
+                unsafe_allow_html=True,
+            )
+            if pplx_citations:
+                st.markdown("**Citations**")
                 for i, url in enumerate(pplx_citations, 1):
                     is_owned = any(
                         d.lower() in url.lower()
                         for d in st.session_state.config.get("owned_domains", [])
                         if d
                     )
-                    tag = " · OWNED" if is_owned else ""
+                    tag = " · **OWNED**" if is_owned else ""
                     st.markdown(f"{i}. [{url}]({url}){tag}")
     elif pplx_result and "error" in pplx_result:
         st.error(f"Perplexity: {pplx_result['error']}")
 
-    # ---------- Action plan (editable tasks) ----------
-    gaps = evaluate_gaps(organic, kg_present, pplx_mentioned)
-    tasks = load_tasks()
+    # ============================================================
+    # STEP 3 — Action plan
+    # ============================================================
+    st.markdown(
+        '<div class="step-block">'
+        '<div class="step-header"><div class="step-num">03</div><div class="step-title">Action plan</div></div>'
+        '<div class="step-subtitle">Concrete tasks grouped by category. Mark status, paste the proof URL when each is published. Auto-detection flags items already showing on page 1 or in Perplexity citations.</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
+    serp_urls = " ".join((r.get("link") or "").lower() for r in organic)
+    citation_urls = " ".join((c or "").lower() for c in pplx_citations)
+
+    tasks_state = load_tasks()
     status_options = ["todo", "in progress", "done"]
     priority_label = {1: "P1", 2: "P2", 3: "P3"}
     priority_color = {1: "var(--bad)", 2: "var(--warn)", 3: "var(--muted)"}
     status_order = {"todo": 0, "in progress": 1, "done": 2}
 
-    items = []
-    for g in gaps:
-        default_status = "done" if g["present"] else "todo"
-        saved = tasks.get(g["label"], {})
-        items.append({
-            "label": g["label"],
-            "why": g["why"],
-            "action": g["action"],
-            "priority": g["priority"],
-            "status": saved.get("status", default_status),
-            "url": saved.get("url", ""),
-            "notes": saved.get("notes", ""),
-            "auto_present": g["present"],
-        })
+    total_counts = {"todo": 0, "in progress": 0, "done": 0}
+    changed = False
 
-    items.sort(key=lambda i: (status_order[i["status"]], i["priority"]))
+    for category in ACTION_CATEGORIES:
+        st.markdown(
+            f"""
+            <div class="category-header">
+              <div class="category-title">{escape_html(category['title'])}</div>
+              <div class="category-subtitle">{escape_html(category['subtitle'])}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    counts = {"todo": 0, "in progress": 0, "done": 0}
-    for i in items:
-        counts[i["status"]] += 1
+        items = []
+        for t in category["tasks"]:
+            label = t["label"]
+            saved = tasks_state.get(label, {})
+            auto_done = auto_check_task(t, serp_urls, citation_urls)
+            default_status = "done" if auto_done else "todo"
+            items.append({
+                **t,
+                "status": saved.get("status", default_status),
+                "url": saved.get("url", ""),
+                "notes": saved.get("notes", ""),
+                "auto_present": auto_done,
+            })
+
+        items.sort(key=lambda i: (status_order[i["status"]], i["priority"]))
+
+        for it in items:
+            total_counts[it["status"]] += 1
+            label = it["label"]
+            with st.container(border=True):
+                head_cols = st.columns([1, 5, 2])
+                with head_cols[0]:
+                    st.markdown(
+                        f'<div style="font-size:13px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:6px;">{priority_label[it["priority"]]}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with head_cols[1]:
+                    st.markdown(f"**{escape_html(label)}**")
+                with head_cols[2]:
+                    new_status = st.selectbox(
+                        "Status",
+                        status_options,
+                        index=status_options.index(it["status"]),
+                        key=f"status_{category['id']}_{label}",
+                        label_visibility="collapsed",
+                    )
+
+                if it.get("topic"):
+                    st.markdown(
+                        f'<div class="task-topic">↳ Topic: {escape_html(it["topic"])}</div>',
+                        unsafe_allow_html=True,
+                    )
+                st.caption(f"**Why:** {it['why']}")
+                st.caption(f"**Action:** {it['action']}")
+
+                link_cols = st.columns([3, 2])
+                with link_cols[0]:
+                    new_url = st.text_input(
+                        "Proof URL",
+                        value=it["url"],
+                        placeholder="https://... (the published article, profile, etc.)",
+                        key=f"url_{category['id']}_{label}",
+                        label_visibility="collapsed",
+                    )
+                with link_cols[1]:
+                    new_notes = st.text_input(
+                        "Notes",
+                        value=it["notes"],
+                        placeholder="notes (optional)",
+                        key=f"notes_{category['id']}_{label}",
+                        label_visibility="collapsed",
+                    )
+
+                if (
+                    new_status != it["status"]
+                    or new_url != it["url"]
+                    or new_notes != it["notes"]
+                ):
+                    tasks_state[label] = {
+                        "status": new_status,
+                        "url": new_url,
+                        "notes": new_notes,
+                    }
+                    changed = True
+
+                if new_url and new_status == "done":
+                    st.markdown(
+                        f'<div style="font-size:13px;"><a href="{escape_html(new_url)}" target="_blank">↗ {escape_html(new_url)}</a></div>',
+                        unsafe_allow_html=True,
+                    )
+
+                if it["auto_present"] and new_status != "done":
+                    st.caption("⚐ Auto-detected on page 1 / Perplexity citations — consider marking as done.")
 
     st.markdown(
-        f'<div class="section-title">Action plan <small>{counts["todo"]} todo · {counts["in progress"]} doing · {counts["done"]} done</small></div>',
+        f'<div class="section-title">Plan summary <small>{total_counts["todo"]} todo · {total_counts["in progress"]} doing · {total_counts["done"]} done</small></div>',
         unsafe_allow_html=True,
     )
 
-    changed = False
-    for it in items:
-        label = it["label"]
-        with st.container(border=True):
-            head_cols = st.columns([1, 5, 2])
-            with head_cols[0]:
-                st.markdown(
-                    f'<div style="font-size:12px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:8px;">{priority_label[it["priority"]]}</div>',
-                    unsafe_allow_html=True,
-                )
-            with head_cols[1]:
-                st.markdown(f"**{escape_html(label)}**")
-            with head_cols[2]:
-                new_status = st.selectbox(
-                    "Status",
-                    status_options,
-                    index=status_options.index(it["status"]),
-                    key=f"status_{label}",
-                    label_visibility="collapsed",
-                )
-
-            st.caption(f"**Why:** {it['why']}")
-            st.caption(f"**Action:** {it['action']}")
-
-            link_cols = st.columns([3, 2])
-            with link_cols[0]:
-                new_url = st.text_input(
-                    "Proof URL",
-                    value=it["url"],
-                    placeholder="https://... (the published article, profile, etc.)",
-                    key=f"url_{label}",
-                    label_visibility="collapsed",
-                )
-            with link_cols[1]:
-                new_notes = st.text_input(
-                    "Notes",
-                    value=it["notes"],
-                    placeholder="notes (optional)",
-                    key=f"notes_{label}",
-                    label_visibility="collapsed",
-                )
-
-            if (
-                new_status != it["status"]
-                or new_url != it["url"]
-                or new_notes != it["notes"]
-            ):
-                tasks[label] = {
-                    "status": new_status,
-                    "url": new_url,
-                    "notes": new_notes,
-                }
-                changed = True
-
-            if new_url and new_status == "done":
-                st.markdown(
-                    f'<div style="font-size:11px;"><a href="{escape_html(new_url)}" target="_blank">↗ {escape_html(new_url)}</a></div>',
-                    unsafe_allow_html=True,
-                )
-
-            if it["auto_present"] and new_status != "done":
-                st.caption("⚐ Auto-detected on page 1 — consider marking as done.")
-
     if changed:
-        save_tasks(tasks)
+        save_tasks(tasks_state)
         st.rerun()
 
 
