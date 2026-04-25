@@ -572,6 +572,7 @@ def load_config():
     """Load config from disk, with secrets fallback for cloud deploys."""
     config = {
         "api_key": "",
+        "perplexity_key": "",
         "owned_domains": DEFAULT_OWNED.copy(),
         "earned_domains": DEFAULT_EARNED.copy(),
         "negatives": [],
@@ -587,6 +588,11 @@ def load_config():
     try:
         if not config["api_key"] and "serpapi_key" in st.secrets:
             config["api_key"] = st.secrets["serpapi_key"]
+    except Exception:
+        pass
+    try:
+        if not config["perplexity_key"] and "perplexity_key" in st.secrets:
+            config["perplexity_key"] = st.secrets["perplexity_key"]
     except Exception:
         pass
     return config
@@ -648,6 +654,44 @@ def call_serpapi(query, engine, api_key, timeout=30):
 
 
 # ============================================================
+# PERPLEXITY (LLM visibility probe)
+# ============================================================
+PERPLEXITY_PROBE = "Who is Andrii Bruiaka? What does he do, what companies has he founded, and where can I read his work?"
+
+
+def call_perplexity(query, api_key, timeout=45):
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    payload = {
+        "model": "sonar",
+        "messages": [{"role": "user", "content": query}],
+    }
+    resp = requests.post(
+        "https://api.perplexity.ai/chat/completions",
+        json=payload,
+        headers=headers,
+        timeout=timeout,
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:200]}")
+    return resp.json()
+
+
+def parse_perplexity(data):
+    """Extract answer + citations from Perplexity response."""
+    msg = (data.get("choices") or [{}])[0].get("message") or {}
+    answer = msg.get("content", "")
+    citations = data.get("citations") or data.get("search_results") or []
+    citation_urls = []
+    for c in citations:
+        if isinstance(c, str):
+            citation_urls.append(c)
+        elif isinstance(c, dict):
+            citation_urls.append(c.get("url") or c.get("link") or "")
+    citation_urls = [u for u in citation_urls if u]
+    return answer, citation_urls
+
+
+# ============================================================
 # CLASSIFICATION
 # ============================================================
 def result_key(result):
@@ -668,6 +712,110 @@ def classify(result, config):
 
 
 # ============================================================
+# GAP ANALYSIS
+# ============================================================
+TIER1_PRESS = ["finextra.com", "thefintechtimes.com", "sifted.eu", "bankingdive.com", "techcrunch.com", "forbes.com"]
+TIER2_PRESS = ["hackernoon.com", "coindesk.com", "cointelegraph.com", "decrypt.co", "theblock.co", "fintechfilter.com"]
+
+
+def evaluate_gaps(organic_results, kg_present, perplexity_mentions):
+    """Check page 1 of name query for SERP-domination signals."""
+    top10 = organic_results[:10]
+    urls = " ".join((r.get("link") or "").lower() for r in top10)
+
+    linkedin_top = any(
+        "linkedin.com/in/" in (r.get("link") or "").lower() for r in top10[:3]
+    )
+
+    return [
+        {
+            "label": "Knowledge Graph panel",
+            "present": kg_present,
+            "why": "Single biggest signal Google has built an 'entity' for this person. Drives the right-rail card and feeds LLM grounding.",
+            "action": "Create Wikidata entry → add author schema on bruiaka.com → land 1 tier-1 press piece. Triangulation of these three usually triggers KG.",
+            "priority": 1,
+        },
+        {
+            "label": "Wikidata entry",
+            "present": "wikidata.org" in urls,
+            "why": "Lower bar than Wikipedia. Feeds Knowledge Graph and is read by ChatGPT/Perplexity as authoritative.",
+            "action": "Create at wikidata.org/wiki/Special:NewItem. Needs ≥2 reliable third-party sources cited.",
+            "priority": 1,
+        },
+        {
+            "label": "Wikipedia article",
+            "present": "wikipedia.org/wiki/" in urls,
+            "why": "Almost always page-1 result for a name. Highest-trust source for LLMs.",
+            "action": "Needs notability — 3+ independent press pieces first. Don't self-create; have a third party draft once press exists.",
+            "priority": 2,
+        },
+        {
+            "label": "Tier-1 fintech press piece",
+            "present": any(d in urls for d in TIER1_PRESS),
+            "why": "Authoritative outlet bylined or profiled = page-1 owned by trusted brand, plus citation fodder for LLMs.",
+            "action": "Pitch profile or guest column to Finextra, Sifted, The Fintech Times, Banking Dive. Lead with concrete wins (Onicore, Nonbank.io, Kolo).",
+            "priority": 1,
+        },
+        {
+            "label": "Tier-2 industry press",
+            "present": any(d in urls for d in TIER2_PRESS),
+            "why": "Easier to land than tier-1, still adds citation depth.",
+            "action": "Cross-publish or contribute to HackerNoon, Coindesk, Decrypt, etc. with author profile pages.",
+            "priority": 3,
+        },
+        {
+            "label": "Crunchbase person page",
+            "present": "crunchbase.com/person/" in urls or "crunchbase.com" in urls,
+            "why": "Always ranks for founder names. Feeds entity recognition.",
+            "action": "Claim/create at crunchbase.com. Link to all founded companies.",
+            "priority": 2,
+        },
+        {
+            "label": "LinkedIn in top 3",
+            "present": linkedin_top,
+            "why": "Default for any professional name search — should be position 1 or 2.",
+            "action": "Set vanity URL to /in/andriibruiaka, fill all sections, get 5+ recommendations to push ranking.",
+            "priority": 2,
+        },
+        {
+            "label": "Substack indexed for name",
+            "present": "substack.com" in urls,
+            "why": "Owned content that ranks = direct SERP control with your message.",
+            "action": "Publish 2 cornerstone posts with 'Andrii Bruiaka' in the title and URL slug. One bio post, one POV piece.",
+            "priority": 2,
+        },
+        {
+            "label": "Medium / Dev.to / Hashnode bylined",
+            "present": any(d in urls for d in ["medium.com", "dev.to", "hashnode.com"]),
+            "why": "These platforms rank well for author pages and are LLM-friendly.",
+            "action": "Cross-post 1 cornerstone article on Medium with author URL = name. Set up Hashnode + Dev.to author profiles.",
+            "priority": 3,
+        },
+        {
+            "label": "GitHub profile",
+            "present": "github.com/" in urls,
+            "why": "Easy 10-minute win. Ranks for technical founder names.",
+            "action": "Set up github.com/andriibruiaka with bio, link to bruiaka.com, pin 3 repos.",
+            "priority": 3,
+        },
+        {
+            "label": "Reddit organic mention",
+            "present": "reddit.com" in urls,
+            "why": "LLMs (especially ChatGPT) lean heavily on Reddit. One discussion can move both Google and AI search.",
+            "action": "Get one organic mention in r/fintech / r/startups (project Show & Tell, AMA, or third-party share). Don't self-promote thinly.",
+            "priority": 3,
+        },
+        {
+            "label": "Mentioned by Perplexity",
+            "present": perplexity_mentions,
+            "why": "Direct signal that the AI search layer 'knows' him. Driven by citations, so it improves as press lands.",
+            "action": "Will improve automatically as Wikidata + tier-1 press land. Re-check monthly.",
+            "priority": 2,
+        },
+    ]
+
+
+# ============================================================
 # SESSION STATE
 # ============================================================
 if "config" not in st.session_state:
@@ -680,6 +828,12 @@ if "active_task_id" not in st.session_state:
     st.session_state.active_task_id = None
 if "custom_tasks" not in st.session_state:
     st.session_state.custom_tasks = []
+if "view_mode" not in st.session_state:
+    st.session_state.view_mode = "Strategy"
+if "perplexity_result" not in st.session_state:
+    st.session_state.perplexity_result = None
+if "perplexity_status" not in st.session_state:
+    st.session_state.perplexity_status = "idle"
 
 all_tasks = TASKS + st.session_state.custom_tasks
 
@@ -689,6 +843,22 @@ def get_task(task_id):
         if t["id"] == task_id:
             return t
     return None
+
+
+def run_perplexity():
+    key = st.session_state.config.get("perplexity_key")
+    if not key:
+        st.session_state.perplexity_status = "error"
+        st.session_state.perplexity_result = {"error": "No Perplexity key configured"}
+        return
+    try:
+        st.session_state.perplexity_status = "running"
+        data = call_perplexity(PERPLEXITY_PROBE, key)
+        st.session_state.perplexity_result = data
+        st.session_state.perplexity_status = "ok"
+    except Exception as e:
+        st.session_state.perplexity_status = "error"
+        st.session_state.perplexity_result = {"error": str(e)}
 
 
 def run_single(task):
@@ -721,6 +891,14 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
+    st.session_state.view_mode = st.radio(
+        "View",
+        ["Strategy", "Raw queries"],
+        index=0 if st.session_state.view_mode == "Strategy" else 1,
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+
     # Settings expander
     with st.expander("⚙ Settings", expanded=not has_key):
         api_input = st.text_input(
@@ -728,6 +906,12 @@ with st.sidebar:
             value=st.session_state.config.get("api_key", ""),
             type="password",
             help="Get one at serpapi.com/dashboard. Free tier = 100 searches/month.",
+        )
+        pplx_input = st.text_input(
+            "Perplexity Key (optional)",
+            value=st.session_state.config.get("perplexity_key", ""),
+            type="password",
+            help="Get one at perplexity.ai/settings/api. Used for the LLM visibility check.",
         )
         owned_input = st.text_area(
             "Owned Domains (one per line)",
@@ -743,6 +927,7 @@ with st.sidebar:
         )
         if st.button("Save Settings", use_container_width=True):
             st.session_state.config["api_key"] = api_input.strip()
+            st.session_state.config["perplexity_key"] = pplx_input.strip()
             st.session_state.config["owned_domains"] = [
                 l.strip() for l in owned_input.split("\n") if l.strip()
             ]
@@ -830,6 +1015,198 @@ with st.sidebar:
 # ============================================================
 # MAIN PANEL
 # ============================================================
+def render_strategy():
+    has_serp = bool(st.session_state.config.get("api_key"))
+    has_pplx = bool(st.session_state.config.get("perplexity_key"))
+    primary_task = next((t for t in TASKS if t["id"] == "core_g"), None)
+
+    # Header
+    st.markdown(
+        """
+        <div class="query-display">
+          <div class="query-text">andrii bruiaka</div>
+          <div class="query-meta">
+            <span>Goal · <strong>OWN PAGE 1 WITH POSITIVE CONTENT</strong></span>
+            <span>Engine · <strong>GOOGLE</strong></span>
+            <span class="accent">SERP · LLM · Action plan</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not has_serp:
+        st.warning("Add SerpAPI key in Settings to begin.")
+        return
+
+    cols = st.columns([1, 1])
+    with cols[0]:
+        if st.button("▶ Refresh Google name search", use_container_width=True, type="primary"):
+            run_single(primary_task)
+            st.rerun()
+    with cols[1]:
+        if has_pplx:
+            if st.button("▶ Refresh Perplexity probe", use_container_width=True):
+                run_perplexity()
+                st.rerun()
+        else:
+            st.caption("Add Perplexity key in Settings to enable LLM probe.")
+
+    serp_result = st.session_state.results.get(primary_task["id"]) if primary_task else None
+    pplx_result = st.session_state.perplexity_result
+
+    if not serp_result or "error" in (serp_result or {}):
+        st.info("Click 'Refresh Google name search' to load page 1 data.")
+        if serp_result and "error" in serp_result:
+            st.error(serp_result["error"])
+        return
+
+    organic = (serp_result.get("organic_results") or [])[:10]
+    counts = {"owned": 0, "earned": 0, "neutral": 0, "negative": 0}
+    for r in organic:
+        counts[classify(r, st.session_state.config)] += 1
+    aligned = counts["owned"] + counts["earned"]
+    total = len(organic) or 1
+    kg_present = bool(serp_result.get("knowledge_graph"))
+
+    # ---------- Verdict bar ----------
+    google_status = (
+        ("strong", "var(--good)") if aligned >= 7
+        else ("moderate", "var(--warn)") if aligned >= 4
+        else ("weak", "var(--bad)")
+    )
+
+    pplx_mentioned = False
+    pplx_owned_cited = 0
+    pplx_answer = ""
+    pplx_citations = []
+    if pplx_result and "error" not in pplx_result:
+        pplx_answer, pplx_citations = parse_perplexity(pplx_result)
+        name_l = "bruiaka"
+        pplx_mentioned = name_l in pplx_answer.lower()
+        owned = st.session_state.config.get("owned_domains", [])
+        for url in pplx_citations:
+            ul = url.lower()
+            if any(d.lower() in ul for d in owned if d):
+                pplx_owned_cited += 1
+
+    if pplx_result is None:
+        pplx_status = ("not run", "var(--muted)")
+    elif "error" in (pplx_result or {}):
+        pplx_status = ("error", "var(--bad)")
+    elif pplx_mentioned:
+        pplx_status = (f"mentioned · {pplx_owned_cited} owned cited", "var(--good)" if pplx_owned_cited else "var(--warn)")
+    else:
+        pplx_status = ("not mentioned", "var(--bad)")
+
+    kg_status = ("present", "var(--good)") if kg_present else ("missing", "var(--bad)")
+
+    st.markdown(
+        f"""
+        <div class="saturation-card" style="grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
+          <div>
+            <div class="saturation-label">Google name search</div>
+            <div class="saturation-number" style="color: {google_status[1]};">{aligned}<span>/{total}</span></div>
+            <div class="saturation-label" style="color: {google_status[1]};">{google_status[0]}</div>
+          </div>
+          <div>
+            <div class="saturation-label">Perplexity (LLM)</div>
+            <div class="saturation-number" style="font-size: 38px; color: {pplx_status[1]};">{pplx_status[0]}</div>
+            <div class="saturation-label">probe: "Who is Andrii Bruiaka?"</div>
+          </div>
+          <div>
+            <div class="saturation-label">Knowledge Graph</div>
+            <div class="saturation-number" style="font-size: 38px; color: {kg_status[1]};">{kg_status[0]}</div>
+            <div class="saturation-label">Google entity card</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ---------- Page 1 breakdown ----------
+    st.markdown(
+        f'<div class="section-title">Page 1 breakdown <small>{total} results · {aligned} aligned</small></div>',
+        unsafe_allow_html=True,
+    )
+    for i, r in enumerate(organic):
+        cls = classify(r, st.session_state.config)
+        title = escape_html(r.get("title") or "Untitled")
+        link = r.get("link") or ""
+        displayed = escape_html(r.get("displayed_link") or link)
+        snippet = escape_html((r.get("snippet") or "")[:160])
+        st.markdown(
+            f"""
+            <div class="result-row">
+              <div class="result-pos">{i+1:02d}</div>
+              <div class="result-body">
+                <div class="result-title">{title}</div>
+                <div class="result-link"><a href="{escape_html(link)}" target="_blank" rel="noopener">{displayed}</a></div>
+                {f'<div class="result-snippet">{snippet}</div>' if snippet else ''}
+              </div>
+              <div class="tag {cls}">{cls}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # ---------- Perplexity detail ----------
+    if pplx_result and "error" not in pplx_result:
+        st.markdown(
+            f'<div class="section-title">What Perplexity says <small>{len(pplx_citations)} citations</small></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div class="kg-card"><div class="kg-desc">{escape_html(pplx_answer)}</div></div>',
+            unsafe_allow_html=True,
+        )
+        if pplx_citations:
+            with st.expander(f"Citations ({len(pplx_citations)})"):
+                for i, url in enumerate(pplx_citations, 1):
+                    is_owned = any(
+                        d.lower() in url.lower()
+                        for d in st.session_state.config.get("owned_domains", [])
+                        if d
+                    )
+                    tag = " · OWNED" if is_owned else ""
+                    st.markdown(f"{i}. [{url}]({url}){tag}")
+    elif pplx_result and "error" in pplx_result:
+        st.error(f"Perplexity: {pplx_result['error']}")
+
+    # ---------- Action list ----------
+    gaps = evaluate_gaps(organic, kg_present, pplx_mentioned)
+    missing = [g for g in gaps if not g["present"]]
+    have = [g for g in gaps if g["present"]]
+    missing.sort(key=lambda g: g["priority"])
+
+    st.markdown(
+        f'<div class="section-title">What to do next <small>{len(missing)} gaps · prioritized</small></div>',
+        unsafe_allow_html=True,
+    )
+    priority_label = {1: "P1 · do first", 2: "P2", 3: "P3"}
+    priority_color = {1: "var(--bad)", 2: "var(--warn)", 3: "var(--muted)"}
+    for g in missing:
+        st.markdown(
+            f"""
+            <div class="result-row" style="grid-template-columns: 90px 1fr 110px;">
+              <div class="result-pos" style="font-size: 11px; color: {priority_color[g['priority']]}; text-transform: uppercase; letter-spacing: 0.12em; font-family: 'JetBrains Mono', monospace;">{priority_label[g['priority']]}</div>
+              <div class="result-body">
+                <div class="result-title">{escape_html(g['label'])}</div>
+                <div class="result-snippet" style="margin-bottom: 6px;"><strong>Why:</strong> {escape_html(g['why'])}</div>
+                <div class="result-snippet"><strong>Action:</strong> {escape_html(g['action'])}</div>
+              </div>
+              <div class="tag negative">MISSING</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    if have:
+        with st.expander(f"Already in place ({len(have)})"):
+            for g in have:
+                st.markdown(f"- ✓ **{g['label']}** — {g['why']}")
+
+
 def render_welcome():
     st.markdown(
         """
@@ -1076,12 +1453,15 @@ def render_task_result(task):
 
 
 # Render
-if st.session_state.active_task_id is None:
-    render_welcome()
+if st.session_state.view_mode == "Strategy":
+    render_strategy()
 else:
-    task = get_task(st.session_state.active_task_id)
-    if task:
-        render_task_result(task)
-    else:
-        st.session_state.active_task_id = None
+    if st.session_state.active_task_id is None:
         render_welcome()
+    else:
+        task = get_task(st.session_state.active_task_id)
+        if task:
+            render_task_result(task)
+        else:
+            st.session_state.active_task_id = None
+            render_welcome()
