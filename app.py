@@ -646,10 +646,6 @@ PRIMARY_TASK = {
 # Side queries — optional ad-hoc checks shown in the Raw queries view only.
 TASKS = [
     PRIMARY_TASK,  # kept in TASKS so existing run_single / get_task flow works
-    # Brand Surface
-    {"id": "brand_dom", "group": "Brand Surface", "label": "bruiaka.com", "engine": "google", "query": "bruiaka.com"},
-    {"id": "brand_sub", "group": "Brand Surface", "label": "andrii bruiaka substack", "engine": "google", "query": "andrii bruiaka substack"},
-    {"id": "brand_li", "group": "Brand Surface", "label": "andrii bruiaka linkedin", "engine": "google", "query": "andrii bruiaka linkedin"},
     # Companies
     {"id": "co_oni", "group": "Companies", "label": "onicore", "engine": "google", "query": "onicore fintech"},
     {"id": "co_nb", "group": "Companies", "label": "nonbank.io", "engine": "google", "query": "nonbank.io"},
@@ -712,18 +708,29 @@ def load_snapshots():
     return {}
 
 
+def empty_tasks_doc():
+    return {"states": {}, "hidden": [], "custom": {}}
+
+
 def load_tasks():
-    if TASKS_FILE.exists():
-        try:
-            return json.loads(TASKS_FILE.read_text())
-        except Exception:
-            return {}
-    return {}
-
-
-def save_tasks(tasks):
+    """Return {states, hidden, custom}. Migrate legacy flat dict if needed."""
+    if not TASKS_FILE.exists():
+        return empty_tasks_doc()
     try:
-        TASKS_FILE.write_text(json.dumps(tasks, indent=2))
+        data = json.loads(TASKS_FILE.read_text())
+    except Exception:
+        return empty_tasks_doc()
+    if isinstance(data, dict) and "states" in data:
+        data.setdefault("hidden", [])
+        data.setdefault("custom", {})
+        return data
+    # Legacy flat schema: {label: {status, url, notes}} → migrate
+    return {"states": data if isinstance(data, dict) else {}, "hidden": [], "custom": {}}
+
+
+def save_tasks(doc):
+    try:
+        TASKS_FILE.write_text(json.dumps(doc, indent=2))
     except Exception:
         pass
 
@@ -1553,7 +1560,11 @@ def render_strategy():
     serp_urls = " ".join((r.get("link") or "").lower() for r in organic)
     citation_urls = " ".join((c or "").lower() for c in pplx_citations)
 
-    tasks_state = load_tasks()
+    doc = load_tasks()
+    states = doc["states"]
+    hidden = set(doc["hidden"])
+    custom = doc["custom"]
+
     status_options = ["todo", "in progress", "done"]
     priority_label = {1: "P1", 2: "P2", 3: "P3"}
     priority_color = {1: "var(--bad)", 2: "var(--warn)", 3: "var(--muted)"}
@@ -1562,7 +1573,91 @@ def render_strategy():
     total_counts = {"todo": 0, "in progress": 0, "done": 0}
     changed = False
 
+    def render_task(it, cat_id, is_custom):
+        nonlocal changed
+        label = it["label"]
+        with st.container(border=True):
+            head_cols = st.columns([1, 4, 2, 1])
+            with head_cols[0]:
+                st.markdown(
+                    f'<div style="font-size:13px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:6px;">{priority_label[it["priority"]]}</div>',
+                    unsafe_allow_html=True,
+                )
+            with head_cols[1]:
+                st.markdown(f"**{escape_html(label)}**")
+            with head_cols[2]:
+                new_status = st.selectbox(
+                    "Status",
+                    status_options,
+                    index=status_options.index(it["status"]),
+                    key=f"status_{cat_id}_{label}",
+                    label_visibility="collapsed",
+                )
+            with head_cols[3]:
+                if st.button("✕", key=f"del_{cat_id}_{label}", help="Remove this task"):
+                    if is_custom:
+                        custom[cat_id] = [
+                            c for c in custom.get(cat_id, []) if c["label"] != label
+                        ]
+                    else:
+                        if label not in hidden:
+                            hidden.add(label)
+                    states.pop(label, None)
+                    save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
+                    st.rerun()
+
+            if it.get("topic"):
+                st.markdown(
+                    f'<div class="task-topic">↳ Topic: {escape_html(it["topic"])}</div>',
+                    unsafe_allow_html=True,
+                )
+            if it.get("why"):
+                st.caption(f"**Why:** {it['why']}")
+            if it.get("action"):
+                st.caption(f"**Action:** {it['action']}")
+
+            link_cols = st.columns([3, 2])
+            with link_cols[0]:
+                new_url = st.text_input(
+                    "Proof URL",
+                    value=it["url"],
+                    placeholder="https://... (the published article, profile, etc.)",
+                    key=f"url_{cat_id}_{label}",
+                    label_visibility="collapsed",
+                )
+            with link_cols[1]:
+                new_notes = st.text_input(
+                    "Notes",
+                    value=it["notes"],
+                    placeholder="notes (optional)",
+                    key=f"notes_{cat_id}_{label}",
+                    label_visibility="collapsed",
+                )
+
+            if (
+                new_status != it["status"]
+                or new_url != it["url"]
+                or new_notes != it["notes"]
+            ):
+                states[label] = {
+                    "status": new_status,
+                    "url": new_url,
+                    "notes": new_notes,
+                }
+                changed = True
+
+            if new_url and new_status == "done":
+                st.markdown(
+                    f'<div style="font-size:13px;"><a href="{escape_html(new_url)}" target="_blank">↗ {escape_html(new_url)}</a></div>',
+                    unsafe_allow_html=True,
+                )
+
+            if it.get("auto_present") and new_status != "done":
+                st.caption("⚐ Auto-detected on page 1 / Perplexity citations — consider marking as done.")
+
     for category in ACTION_CATEGORIES:
+        cat_id = category["id"]
+
         st.markdown(
             f"""
             <div class="category-header">
@@ -1573,10 +1668,12 @@ def render_strategy():
             unsafe_allow_html=True,
         )
 
+        # Build items: built-in (not hidden) + custom
         items = []
         for t in category["tasks"]:
-            label = t["label"]
-            saved = tasks_state.get(label, {})
+            if t["label"] in hidden:
+                continue
+            saved = states.get(t["label"], {})
             auto_done = auto_check_task(t, serp_urls, citation_urls)
             default_status = "done" if auto_done else "todo"
             items.append({
@@ -1585,85 +1682,69 @@ def render_strategy():
                 "url": saved.get("url", ""),
                 "notes": saved.get("notes", ""),
                 "auto_present": auto_done,
+                "_custom": False,
+            })
+        for c in custom.get(cat_id, []):
+            saved = states.get(c["label"], {})
+            items.append({
+                **c,
+                "status": saved.get("status", "todo"),
+                "url": saved.get("url", ""),
+                "notes": saved.get("notes", ""),
+                "auto_present": False,
+                "_custom": True,
             })
 
         items.sort(key=lambda i: (status_order[i["status"]], i["priority"]))
 
         for it in items:
             total_counts[it["status"]] += 1
-            label = it["label"]
-            with st.container(border=True):
-                head_cols = st.columns([1, 5, 2])
-                with head_cols[0]:
-                    st.markdown(
-                        f'<div style="font-size:13px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:6px;">{priority_label[it["priority"]]}</div>',
-                        unsafe_allow_html=True,
-                    )
-                with head_cols[1]:
-                    st.markdown(f"**{escape_html(label)}**")
-                with head_cols[2]:
-                    new_status = st.selectbox(
-                        "Status",
-                        status_options,
-                        index=status_options.index(it["status"]),
-                        key=f"status_{category['id']}_{label}",
-                        label_visibility="collapsed",
-                    )
+            render_task(it, cat_id, it["_custom"])
 
-                if it.get("topic"):
-                    st.markdown(
-                        f'<div class="task-topic">↳ Topic: {escape_html(it["topic"])}</div>',
-                        unsafe_allow_html=True,
-                    )
-                st.caption(f"**Why:** {it['why']}")
-                st.caption(f"**Action:** {it['action']}")
-
-                link_cols = st.columns([3, 2])
-                with link_cols[0]:
-                    new_url = st.text_input(
-                        "Proof URL",
-                        value=it["url"],
-                        placeholder="https://... (the published article, profile, etc.)",
-                        key=f"url_{category['id']}_{label}",
-                        label_visibility="collapsed",
-                    )
-                with link_cols[1]:
-                    new_notes = st.text_input(
-                        "Notes",
-                        value=it["notes"],
-                        placeholder="notes (optional)",
-                        key=f"notes_{category['id']}_{label}",
-                        label_visibility="collapsed",
-                    )
-
-                if (
-                    new_status != it["status"]
-                    or new_url != it["url"]
-                    or new_notes != it["notes"]
-                ):
-                    tasks_state[label] = {
-                        "status": new_status,
-                        "url": new_url,
-                        "notes": new_notes,
-                    }
-                    changed = True
-
-                if new_url and new_status == "done":
-                    st.markdown(
-                        f'<div style="font-size:13px;"><a href="{escape_html(new_url)}" target="_blank">↗ {escape_html(new_url)}</a></div>',
-                        unsafe_allow_html=True,
-                    )
-
-                if it["auto_present"] and new_status != "done":
-                    st.caption("⚐ Auto-detected on page 1 / Perplexity citations — consider marking as done.")
+        # + Add task form
+        with st.expander(f"+ Add task to '{category['title']}'"):
+            with st.form(key=f"add_form_{cat_id}", clear_on_submit=True):
+                new_label = st.text_input("Task name *", key=f"new_label_{cat_id}")
+                col_p, col_t = st.columns([1, 3])
+                with col_p:
+                    new_priority = st.selectbox("Priority", [1, 2, 3], key=f"new_prio_{cat_id}")
+                with col_t:
+                    new_topic = st.text_input("Topic / angle (optional)", key=f"new_topic_{cat_id}")
+                new_why = st.text_area("Why it matters (optional)", key=f"new_why_{cat_id}", height=70)
+                new_action = st.text_area("Concrete action (optional)", key=f"new_action_{cat_id}", height=70)
+                submitted = st.form_submit_button("Add task")
+                if submitted and new_label.strip():
+                    custom.setdefault(cat_id, []).append({
+                        "label": new_label.strip(),
+                        "priority": new_priority,
+                        "topic": new_topic.strip(),
+                        "why": new_why.strip(),
+                        "action": new_action.strip(),
+                        "domains": [],
+                    })
+                    save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
+                    st.rerun()
 
     st.markdown(
         f'<div class="section-title">Plan summary <small>{total_counts["todo"]} todo · {total_counts["in progress"]} doing · {total_counts["done"]} done</small></div>',
         unsafe_allow_html=True,
     )
 
+    # Restore hidden tasks (in case user wants something back)
+    if hidden:
+        with st.expander(f"Hidden built-in tasks ({len(hidden)}) — restore"):
+            for label in sorted(hidden):
+                cols = st.columns([5, 1])
+                with cols[0]:
+                    st.write(label)
+                with cols[1]:
+                    if st.button("Restore", key=f"restore_{label}"):
+                        hidden.discard(label)
+                        save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
+                        st.rerun()
+
     if changed:
-        save_tasks(tasks_state)
+        save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
         st.rerun()
 
 
