@@ -82,7 +82,7 @@ h1, h2, h3, h4, .display-serif {
 .brand-mark::first-letter { color: var(--accent); }
 
 .brand-tag {
-  font-size: 9px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.18em;
   color: var(--muted);
@@ -107,7 +107,7 @@ section[data-testid="stSidebar"] > div {
   padding: 6px 12px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--text-dim);
@@ -132,7 +132,7 @@ section[data-testid="stSidebar"] > div {
 
 /* Section labels */
 .section-label {
-  font-size: 9px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: var(--muted);
@@ -143,7 +143,7 @@ section[data-testid="stSidebar"] > div {
 .task-group-label {
   font-family: 'Fraunces', serif;
   font-style: italic;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--accent);
   margin: 16px 0 6px;
 }
@@ -151,7 +151,7 @@ section[data-testid="stSidebar"] > div {
 /* Streamlit button overrides */
 .stButton > button {
   font-family: 'JetBrains Mono', monospace !important;
-  font-size: 11px !important;
+  font-size: 13px !important;
   border-radius: 0 !important;
   border: 1px solid var(--border) !important;
   background: var(--surface) !important;
@@ -188,7 +188,7 @@ section[data-testid="stSidebar"] > div {
 /* Text inputs */
 .stTextInput input, .stTextArea textarea, .stSelectbox > div > div {
   font-family: 'JetBrains Mono', monospace !important;
-  font-size: 12px !important;
+  font-size: 14px !important;
   border-radius: 0 !important;
   border-color: var(--border) !important;
   background: var(--surface) !important;
@@ -200,7 +200,7 @@ section[data-testid="stSidebar"] > div {
 }
 
 label {
-  font-size: 10px !important;
+  font-size: 12px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.15em !important;
   color: var(--muted) !important;
@@ -209,7 +209,7 @@ label {
 /* Expanders */
 .streamlit-expanderHeader, [data-testid="stExpander"] summary {
   font-family: 'JetBrains Mono', monospace !important;
-  font-size: 11px !important;
+  font-size: 13px !important;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--text-dim) !important;
@@ -243,14 +243,14 @@ label {
 }
 
 .welcome-body {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--muted);
   line-height: 1.7;
   margin-bottom: 32px;
 }
 
 .welcome-hint {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: var(--accent);
@@ -281,7 +281,7 @@ label {
   display: flex;
   flex-wrap: wrap;
   gap: 24px;
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -317,7 +317,7 @@ label {
 }
 
 .saturation-label {
-  font-size: 9px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: var(--muted);
@@ -349,7 +349,7 @@ label {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 9px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -377,20 +377,20 @@ label {
   position: absolute;
   top: 12px;
   right: 16px;
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.22em;
   color: var(--accent);
 }
 .kg-title { font-family: 'Fraunces', serif; font-size: 24px; margin-bottom: 4px; }
-.kg-type { font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 12px; }
-.kg-desc { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+.kg-type { font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 12px; }
+.kg-desc { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
 
 .no-kg {
   background: var(--surface);
   border: 1px dashed var(--border-bright);
   padding: 14px 20px;
   margin-bottom: 32px;
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -410,7 +410,7 @@ label {
 }
 .section-title small {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -436,13 +436,13 @@ label {
 
 .result-body { min-width: 0; }
 .result-title {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text);
   margin-bottom: 4px;
   font-weight: 500;
 }
 .result-link {
-  font-size: 11px;
+  font-size: 13px;
   margin-bottom: 6px;
   word-break: break-all;
 }
@@ -452,7 +452,7 @@ label {
 }
 .result-link a:hover { color: var(--accent); }
 .result-snippet {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   line-height: 1.6;
 }
@@ -461,7 +461,7 @@ label {
   align-self: start;
   text-align: center;
   padding: 4px 10px;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -484,7 +484,7 @@ label {
   padding: 6px 12px;
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-dim);
 }
 
@@ -968,7 +968,7 @@ with st.sidebar:
         progress_bar = st.progress(0)
         status_text = st.empty()
         for i, task in enumerate(TASKS):
-            status_text.markdown(f'<div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em">Running: {task["label"]}</div>', unsafe_allow_html=True)
+            status_text.markdown(f'<div style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em">Running: {task["label"]}</div>', unsafe_allow_html=True)
             run_single(task)
             progress_bar.progress((i + 1) / len(TASKS))
             time.sleep(0.25)
@@ -1232,7 +1232,7 @@ def render_strategy():
             head_cols = st.columns([1, 5, 2])
             with head_cols[0]:
                 st.markdown(
-                    f'<div style="font-size:10px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:8px;">{priority_label[it["priority"]]}</div>',
+                    f'<div style="font-size:12px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:8px;">{priority_label[it["priority"]]}</div>',
                     unsafe_allow_html=True,
                 )
             with head_cols[1]:
