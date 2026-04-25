@@ -499,9 +499,13 @@ label {
 [data-testid="stToolbar"] { display: none; }
 
 /* High-contrast overrides for readability */
-.stApp, .stApp p, .stApp li { color: var(--text) !important; line-height: 1.6; }
+.stApp p, .stApp li, .stMarkdown p, .stMarkdown li { color: var(--text) !important; line-height: 1.6; }
 .stCaption, [data-testid="stCaptionContainer"], .stMarkdown small { color: var(--text-dim) !important; font-size: 14px !important; }
-.stMarkdown strong, b { color: var(--text) !important; font-weight: 700 !important; }
+.stMarkdown strong, .stMarkdown b { color: var(--text) !important; font-weight: 700 !important; }
+/* Restore primary button white text (broad rules above must not touch buttons) */
+.stButton > button[kind="primary"], .stButton > button[kind="primary"] * {
+  color: var(--bg) !important;
+}
 
 /* ===== Step structure ===== */
 .step-block { margin: 56px 0 8px; padding-top: 32px; border-top: 2px solid var(--border); }
