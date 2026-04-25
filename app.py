@@ -745,8 +745,8 @@ def save_snapshot(task_id, data):
 # ============================================================
 # SERPAPI
 # ============================================================
-def call_serpapi(query, engine, api_key, timeout=30):
-    params = {"q": query, "engine": engine, "api_key": api_key, "num": 20}
+def call_serpapi(query, engine, api_key, timeout=30, start=0):
+    params = {"q": query, "engine": engine, "api_key": api_key, "num": 10, "start": start}
     if engine == "google":
         params["gl"] = "us"
         params["hl"] = "en"
@@ -757,6 +757,24 @@ def call_serpapi(query, engine, api_key, timeout=30):
     if "error" in data:
         raise RuntimeError(data["error"])
     return data
+
+
+def call_serpapi_multipage(query, engine, api_key, pages=3, timeout=30):
+    """Fetch N pages of SERP results and merge organic_results."""
+    merged = None
+    all_organic = []
+    for page in range(pages):
+        data = call_serpapi(query, engine, api_key, timeout=timeout, start=page * 10)
+        organic = data.get("organic_results") or []
+        all_organic.extend(organic)
+        if merged is None:
+            merged = data
+        if not organic:
+            break
+    if merged is None:
+        return {}
+    merged["organic_results"] = all_organic
+    return merged
 
 
 # ============================================================
@@ -1336,23 +1354,36 @@ def render_strategy():
     st.markdown(
         '<div class="step-block first">'
         '<div class="step-header"><div class="step-num">01</div><div class="step-title">Google search</div></div>'
-        '<div class="step-subtitle">What does page 1 look like for "andrii bruiaka"? Each row is a SERP slot you either own, earn, or need to displace.</div>'
+        '<div class="step-subtitle">What do pages 1-3 (top 30) look like for "andrii bruiaka"? Each row is a SERP slot you either own, earn, or need to displace. Page 1 is what almost everyone sees; pages 2-3 are still in reach for someone digging.</div>'
         '</div>',
         unsafe_allow_html=True,
     )
 
-    if st.button("▶ Refresh Google name search", use_container_width=True, type="primary"):
-        run_single(primary_task)
+    if st.button("▶ Refresh Google name search (3 pages, top 30)", use_container_width=True, type="primary"):
+        try:
+            st.session_state.task_status[primary_task["id"]] = "running"
+            data = call_serpapi_multipage(
+                primary_task["query"],
+                primary_task["engine"],
+                st.session_state.config["api_key"],
+                pages=3,
+            )
+            st.session_state.results[primary_task["id"]] = data
+            st.session_state.task_status[primary_task["id"]] = "ok"
+            save_snapshot(primary_task["id"], data)
+        except Exception as e:
+            st.session_state.task_status[primary_task["id"]] = "error"
+            st.session_state.results[primary_task["id"]] = {"error": str(e)}
         st.rerun()
 
     if not serp_result:
-        st.info("Click 'Refresh Google name search' above to load page 1 data.")
+        st.info("Click 'Refresh Google name search' above to load page 1-3 data (top 30).")
         return
     if "error" in serp_result:
         st.error(serp_result["error"])
         return
 
-    organic = (serp_result.get("organic_results") or [])[:10]
+    organic = (serp_result.get("organic_results") or [])[:30]
     counts = {"owned": 0, "earned": 0, "neutral": 0, "negative": 0}
     for r in organic:
         counts[classify(r, st.session_state.config)] += 1
@@ -1360,32 +1391,45 @@ def render_strategy():
     total = len(organic) or 1
     kg_present = bool(serp_result.get("knowledge_graph"))
 
+    # Page 1 specifically (first 10) — that's what most users see
+    page1 = organic[:10]
+    page1_counts = {"owned": 0, "earned": 0, "neutral": 0, "negative": 0}
+    for r in page1:
+        page1_counts[classify(r, st.session_state.config)] += 1
+    page1_aligned = page1_counts["owned"] + page1_counts["earned"]
+    page1_total = len(page1) or 1
+
     google_status = (
-        ("strong", "var(--good)") if aligned >= 7
-        else ("moderate", "var(--warn)") if aligned >= 4
+        ("strong", "var(--good)") if page1_aligned >= 7
+        else ("moderate", "var(--warn)") if page1_aligned >= 4
         else ("weak", "var(--bad)")
     )
     kg_status = ("present", "var(--good)") if kg_present else ("missing", "var(--bad)")
 
     st.markdown(
         f"""
-        <div class="saturation-card" style="grid-template-columns: 1fr 1fr; gap: 32px;">
+        <div class="saturation-card" style="grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
           <div>
             <div class="saturation-label">Page 1 saturation</div>
-            <div class="saturation-number" style="color: {google_status[1]};">{aligned}<span>/{total}</span></div>
-            <div class="saturation-label" style="color: {google_status[1]};">{google_status[0]} — {counts['owned']} owned · {counts['earned']} earned · {counts['neutral']} neutral · {counts['negative']} negative</div>
+            <div class="saturation-number" style="color: {google_status[1]};">{page1_aligned}<span>/{page1_total}</span></div>
+            <div class="saturation-label" style="color: {google_status[1]};">{google_status[0]} — {page1_counts['owned']} owned · {page1_counts['earned']} earned</div>
+          </div>
+          <div>
+            <div class="saturation-label">Top 30 (3 pages)</div>
+            <div class="saturation-number" style="color: var(--accent);">{aligned}<span>/{total}</span></div>
+            <div class="saturation-label">{counts['owned']} owned · {counts['earned']} earned · {counts['neutral']} neutral · {counts['negative']} negative</div>
           </div>
           <div>
             <div class="saturation-label">Knowledge Graph (entity card)</div>
             <div class="saturation-number" style="font-size: 42px; color: {kg_status[1]};">{kg_status[0]}</div>
-            <div class="saturation-label">Single biggest signal Google built an entity for this person</div>
+            <div class="saturation-label">Biggest signal Google built an entity</div>
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    with st.expander(f"Page 1 results · {len(organic)} ranked", expanded=True):
+    with st.expander(f"All results · {len(organic)} ranked across 3 pages", expanded=True):
         for i, r in enumerate(organic):
             cls = classify(r, st.session_state.config)
             title = escape_html(r.get("title") or "Untitled")
