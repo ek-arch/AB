@@ -30,28 +30,29 @@ st.set_page_config(
 # ============================================================
 CUSTOM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  --bg: #FAF7F0;
+  --bg: #FFFFFF;
   --surface: #FFFFFF;
-  --surface-2: #EDE6D2;
-  --border: #C9C2B0;
-  --border-bright: #9E957F;
-  --text: #15130F;
-  --text-dim: #2A2722;
-  --muted: #555049;
-  --accent: #1A4234;
-  --accent-light: #2D6B54;
-  --good: #2C5F3F;
+  --surface-2: #F4F4F4;
+  --border: #D4D4D4;
+  --border-bright: #9C9C9C;
+  --text: #0A0A0A;
+  --text-dim: #1F1F1F;
+  --muted: #525252;
+  --accent: #15402F;
+  --accent-light: #1F5C44;
+  --good: #176638;
   --warn: #8C4500;
-  --bad: #862A21;
-  --info: #1F436B;
+  --bad: #931F19;
+  --info: #1A3F66;
 }
 
 html, body, [class*="css"], .stApp, .main, .block-container {
-  font-family: 'JetBrains Mono', monospace !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
   color: var(--text) !important;
+  font-size: 16px;
 }
 
 .stApp { background: var(--bg) !important; }
@@ -150,7 +151,7 @@ section[data-testid="stSidebar"] > div {
 
 /* Streamlit button overrides */
 .stButton > button {
-  font-family: 'JetBrains Mono', monospace !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
   font-size: 15px !important;
   border-radius: 0 !important;
   border: 1px solid var(--border) !important;
@@ -187,7 +188,7 @@ section[data-testid="stSidebar"] > div {
 
 /* Text inputs */
 .stTextInput input, .stTextArea textarea, .stSelectbox > div > div {
-  font-family: 'JetBrains Mono', monospace !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
   font-size: 14px !important;
   border-radius: 0 !important;
   border-color: var(--border) !important;
@@ -208,7 +209,7 @@ label {
 
 /* Expanders */
 .streamlit-expanderHeader, [data-testid="stExpander"] summary {
-  font-family: 'JetBrains Mono', monospace !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
   font-size: 15px !important;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -409,7 +410,7 @@ label {
   align-items: baseline;
 }
 .section-title small {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
