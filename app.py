@@ -813,11 +813,11 @@ with st.sidebar:
             if task["id"] in st.session_state.results:
                 result = st.session_state.results[task["id"]]
                 if "error" not in result:
-                    organic = (result.get("organic_results") or [])[:10]
+                    organic = (result.get("organic_results") or [])[:20]
                     aligned = sum(
                         1 for r in organic if classify(r, st.session_state.config) in ("owned", "earned")
                     )
-                    sat_label = f"  {aligned}/10"
+                    sat_label = f"  {aligned}/{len(organic)}"
 
             label_text = f"{icon}  {task['label'][:28]}{sat_label}"
             if st.button(label_text, key=f"task_{task['id']}", use_container_width=True):
