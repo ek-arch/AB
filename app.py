@@ -634,12 +634,18 @@ DEFAULT_EARNED = [
     "linkedin.com",
 ]
 
+# Single primary search powering the Strategy view. Not shown in the sidebar list.
+PRIMARY_TASK = {
+    "id": "core_g",
+    "group": "_primary",
+    "label": "andrii bruiaka",
+    "engine": "google",
+    "query": "andrii bruiaka",
+}
+
+# Side queries — optional ad-hoc checks shown in the Raw queries view only.
 TASKS = [
-    # Core Identity
-    {"id": "core_g", "group": "Core Identity", "label": "andrii bruiaka", "engine": "google", "query": "andrii bruiaka"},
-    {"id": "core_b", "group": "Core Identity", "label": "andrii bruiaka", "engine": "bing", "query": "andrii bruiaka"},
-    {"id": "core_alt", "group": "Core Identity", "label": "andrew bruiaka", "engine": "google", "query": "andrew bruiaka"},
-    {"id": "core_quoted", "group": "Core Identity", "label": '"andrii bruiaka"', "engine": "google", "query": '"andrii bruiaka"'},
+    PRIMARY_TASK,  # kept in TASKS so existing run_single / get_task flow works
     # Brand Surface
     {"id": "brand_dom", "group": "Brand Surface", "label": "bruiaka.com", "engine": "google", "query": "bruiaka.com"},
     {"id": "brand_sub", "group": "Brand Surface", "label": "andrii bruiaka substack", "engine": "google", "query": "andrii bruiaka substack"},
@@ -1270,7 +1276,7 @@ with st.sidebar:
     # Custom query
     with st.expander("+ Custom Query"):
         custom_q = st.text_input("Query", key="custom_q_input")
-        custom_engine = st.selectbox("Engine", ["google", "bing", "duckduckgo"], key="custom_eng_input")
+        custom_engine = "google"
         if st.button("Run", key="run_custom", disabled=not has_key, use_container_width=True):
             if custom_q.strip():
                 cid = f"custom_{len(st.session_state.custom_tasks) + 1}_{int(time.time())}"
@@ -1286,9 +1292,11 @@ with st.sidebar:
                 run_single(ctask)
                 st.rerun()
 
-    # Task list
+    # Task list — hide internal/primary group; only show side queries
     groups = {}
     for t in all_tasks:
+        if t["group"].startswith("_"):
+            continue
         groups.setdefault(t["group"], []).append(t)
 
     status_icons = {"idle": "○", "running": "◐", "ok": "●", "error": "✕"}
