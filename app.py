@@ -670,6 +670,7 @@ def load_config():
         "earned_domains": DEFAULT_EARNED.copy(),
         "negative_domains": ["fintelegram.com"],
         "negatives": [],
+        "irrelevant": [],
     }
     if CONFIG_FILE.exists():
         try:
@@ -1412,7 +1413,12 @@ def render_strategy():
         st.error(serp_result["error"])
         return
 
-    organic = (serp_result.get("organic_results") or [])[:30]
+    raw_organic = (serp_result.get("organic_results") or [])[:30]
+    irrelevant_set = set(st.session_state.config.get("irrelevant", []))
+    # Filter out results the user marked as not-relevant (wrong person, etc.)
+    organic = [r for r in raw_organic if result_key(r) not in irrelevant_set]
+    hidden_count = len(raw_organic) - len(organic)
+
     counts = {"owned": 0, "earned": 0, "neutral": 0, "negative": 0}
     for r in organic:
         counts[classify(r, st.session_state.config)] += 1
@@ -1420,7 +1426,7 @@ def render_strategy():
     total = len(organic) or 1
     kg_present = bool(serp_result.get("knowledge_graph"))
 
-    # Page 1 specifically (first 10) — that's what most users see
+    # Page 1 specifically (first 10 of the visible results) — that's what most users see
     page1 = organic[:10]
     page1_counts = {"owned": 0, "earned": 0, "neutral": 0, "negative": 0}
     for r in page1:
@@ -1458,27 +1464,72 @@ def render_strategy():
         unsafe_allow_html=True,
     )
 
-    with st.expander(f"All results · {len(organic)} ranked across 3 pages", expanded=True):
+    expander_title = f"All results · {len(organic)} visible"
+    if hidden_count:
+        expander_title += f" ({hidden_count} hidden as not relevant)"
+    expander_title += " across 3 pages"
+
+    with st.expander(expander_title, expanded=True):
         for i, r in enumerate(organic):
             cls = classify(r, st.session_state.config)
             title = escape_html(r.get("title") or "Untitled")
             link = r.get("link") or ""
             displayed = escape_html(r.get("displayed_link") or link)
-            snippet = escape_html((r.get("snippet") or "")[:160])
-            st.markdown(
-                f"""
-                <div class="result-row">
-                  <div class="result-pos">{i+1:02d}</div>
-                  <div class="result-body">
-                    <div class="result-title">{title}</div>
-                    <div class="result-link"><a href="{escape_html(link)}" target="_blank" rel="noopener">{displayed}</a></div>
-                    {f'<div class="result-snippet">{snippet}</div>' if snippet else ''}
-                  </div>
-                  <div class="tag {cls}">{cls}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            full_snippet = r.get("snippet") or ""
+            snippet = escape_html(full_snippet)
+
+            row_cols = st.columns([0.5, 7, 1.2, 1])
+            with row_cols[0]:
+                st.markdown(
+                    f'<div style="font-family: \'Fraunces\', serif; font-size: 28px; font-weight: 500; color: var(--muted); padding-top: 8px;">{i+1:02d}</div>',
+                    unsafe_allow_html=True,
+                )
+            with row_cols[1]:
+                st.markdown(
+                    f"""
+                    <div style="padding: 6px 0;">
+                      <div style="font-size: 18px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 6px;">{title}</div>
+                      <div style="font-size: 14px; margin-bottom: 8px;">
+                        <a href="{escape_html(link)}" target="_blank" rel="noopener" style="color: var(--info); text-decoration: none; word-break: break-all;">{displayed}</a>
+                      </div>
+                      {f'<div style="font-size: 16px; color: var(--text-dim); line-height: 1.55;">{snippet}</div>' if snippet else ''}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with row_cols[2]:
+                st.markdown(
+                    f'<div class="tag {cls}" style="margin-top: 10px;">{cls}</div>',
+                    unsafe_allow_html=True,
+                )
+            with row_cols[3]:
+                if st.button("✕ hide", key=f"hide_{i}_{result_key(r)[:60]}", help="Mark as not relevant (wrong person, etc.) — hides from breakdown and saturation count"):
+                    irr = list(st.session_state.config.get("irrelevant", []))
+                    rk = result_key(r)
+                    if rk not in irr:
+                        irr.append(rk)
+                    st.session_state.config["irrelevant"] = irr
+                    save_config(st.session_state.config)
+                    st.rerun()
+
+    if hidden_count:
+        with st.expander(f"Hidden as not relevant ({hidden_count}) — restore"):
+            irr = list(st.session_state.config.get("irrelevant", []))
+            for r in raw_organic:
+                rk = result_key(r)
+                if rk not in irrelevant_set:
+                    continue
+                cols = st.columns([7, 1])
+                with cols[0]:
+                    title = r.get("title") or "Untitled"
+                    link = r.get("link") or ""
+                    st.markdown(f"**{title}**  \n[{link}]({link})")
+                with cols[1]:
+                    if st.button("Restore", key=f"restore_irr_{rk[:60]}"):
+                        irr = [k for k in irr if k != rk]
+                        st.session_state.config["irrelevant"] = irr
+                        save_config(st.session_state.config)
+                        st.rerun()
 
     # ============================================================
     # STEP 2 — LLM
