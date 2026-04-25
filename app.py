@@ -35,18 +35,18 @@ CUSTOM_CSS = """
 :root {
   --bg: #FAF7F0;
   --surface: #FFFFFF;
-  --surface-2: #F4EFE2;
-  --border: #E5DFD0;
-  --border-bright: #C9C2B0;
-  --text: #1F1D1A;
-  --text-dim: #4A453B;
-  --muted: #8A8474;
-  --accent: #1F4E3D;
+  --surface-2: #EDE6D2;
+  --border: #C9C2B0;
+  --border-bright: #9E957F;
+  --text: #15130F;
+  --text-dim: #2A2722;
+  --muted: #555049;
+  --accent: #1A4234;
   --accent-light: #2D6B54;
-  --good: #3B7A52;
-  --warn: #B85C00;
-  --bad: #A8362A;
-  --info: #2D5A8C;
+  --good: #2C5F3F;
+  --warn: #8C4500;
+  --bad: #862A21;
+  --info: #1F436B;
 }
 
 html, body, [class*="css"], .stApp, .main, .block-container {
@@ -72,7 +72,7 @@ h1, h2, h3, h4, .display-serif {
 .brand-mark {
   font-family: 'Fraunces', serif;
   font-size: 26px;
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   letter-spacing: -0.02em;
   color: var(--text);
@@ -82,7 +82,7 @@ h1, h2, h3, h4, .display-serif {
 .brand-mark::first-letter { color: var(--accent); }
 
 .brand-tag {
-  font-size: 11px;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.18em;
   color: var(--muted);
@@ -107,7 +107,7 @@ section[data-testid="stSidebar"] > div {
   padding: 6px 12px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--text-dim);
@@ -132,7 +132,7 @@ section[data-testid="stSidebar"] > div {
 
 /* Section labels */
 .section-label {
-  font-size: 11px;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: var(--muted);
@@ -142,7 +142,7 @@ section[data-testid="stSidebar"] > div {
 
 .task-group-label {
   font-family: 'Fraunces', serif;
-  font-style: italic;
+  font-style: normal;
   font-size: 15px;
   color: var(--accent);
   margin: 16px 0 6px;
@@ -151,7 +151,7 @@ section[data-testid="stSidebar"] > div {
 /* Streamlit button overrides */
 .stButton > button {
   font-family: 'JetBrains Mono', monospace !important;
-  font-size: 13px !important;
+  font-size: 15px !important;
   border-radius: 0 !important;
   border: 1px solid var(--border) !important;
   background: var(--surface) !important;
@@ -200,7 +200,7 @@ section[data-testid="stSidebar"] > div {
 }
 
 label {
-  font-size: 12px !important;
+  font-size: 14px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.15em !important;
   color: var(--muted) !important;
@@ -209,7 +209,7 @@ label {
 /* Expanders */
 .streamlit-expanderHeader, [data-testid="stExpander"] summary {
   font-family: 'JetBrains Mono', monospace !important;
-  font-size: 13px !important;
+  font-size: 15px !important;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--text-dim) !important;
@@ -234,8 +234,8 @@ label {
 
 .welcome-title {
   font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-weight: 300;
+  font-style: normal;
+  font-weight: 500;
   font-size: 48px;
   color: var(--text-dim);
   letter-spacing: -0.02em;
@@ -250,7 +250,7 @@ label {
 }
 
 .welcome-hint {
-  font-size: 12px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: var(--accent);
@@ -265,7 +265,7 @@ label {
 
 .query-text {
   font-family: 'Fraunces', serif;
-  font-style: italic;
+  font-style: normal;
   font-size: 36px;
   font-weight: 400;
   color: var(--text);
@@ -281,7 +281,7 @@ label {
   display: flex;
   flex-wrap: wrap;
   gap: 24px;
-  font-size: 12px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -305,7 +305,7 @@ label {
 .saturation-number {
   font-family: 'Fraunces', serif;
   font-size: 80px;
-  font-weight: 300;
+  font-weight: 500;
   color: var(--accent);
   line-height: 0.95;
   letter-spacing: -0.04em;
@@ -317,7 +317,7 @@ label {
 }
 
 .saturation-label {
-  font-size: 11px;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: var(--muted);
@@ -349,7 +349,7 @@ label {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -377,20 +377,20 @@ label {
   position: absolute;
   top: 12px;
   right: 16px;
-  font-size: 11px;
+  font-size: 15px;
   letter-spacing: 0.22em;
   color: var(--accent);
 }
 .kg-title { font-family: 'Fraunces', serif; font-size: 24px; margin-bottom: 4px; }
-.kg-type { font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 12px; }
-.kg-desc { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+.kg-type { font-size: 16px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 12px; }
+.kg-desc { font-size: 16px; color: var(--text-dim); line-height: 1.6; }
 
 .no-kg {
   background: var(--surface);
   border: 1px dashed var(--border-bright);
   padding: 14px 20px;
   margin-bottom: 32px;
-  font-size: 12px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -400,7 +400,7 @@ label {
 /* Section title */
 .section-title {
   font-family: 'Fraunces', serif;
-  font-style: italic;
+  font-style: normal;
   font-size: 22px;
   color: var(--text);
   margin: 32px 0 20px;
@@ -410,7 +410,7 @@ label {
 }
 .section-title small {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -430,7 +430,7 @@ label {
   font-family: 'Fraunces', serif;
   font-size: 24px;
   color: var(--muted);
-  font-weight: 300;
+  font-weight: 500;
   line-height: 1;
 }
 
@@ -442,7 +442,7 @@ label {
   font-weight: 500;
 }
 .result-link {
-  font-size: 13px;
+  font-size: 15px;
   margin-bottom: 6px;
   word-break: break-all;
 }
@@ -452,7 +452,7 @@ label {
 }
 .result-link a:hover { color: var(--accent); }
 .result-snippet {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--muted);
   line-height: 1.6;
 }
@@ -461,7 +461,7 @@ label {
   align-self: start;
   text-align: center;
   padding: 4px 10px;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -484,7 +484,7 @@ label {
   padding: 6px 12px;
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-dim);
 }
 
@@ -498,6 +498,11 @@ label {
 /* Hide Streamlit deploy button etc */
 [data-testid="stToolbar"] { display: none; }
 
+/* High-contrast overrides for readability */
+.stApp, .stApp p, .stApp li { color: var(--text) !important; line-height: 1.6; }
+.stCaption, [data-testid="stCaptionContainer"], .stMarkdown small { color: var(--text-dim) !important; font-size: 14px !important; }
+.stMarkdown strong, b { color: var(--text) !important; font-weight: 700 !important; }
+
 /* ===== Step structure ===== */
 .step-block { margin: 56px 0 8px; padding-top: 32px; border-top: 2px solid var(--border); }
 .step-block.first { border-top: none; padding-top: 8px; margin-top: 16px; }
@@ -505,21 +510,21 @@ label {
 .step-num {
   font-family: 'Fraunces', serif;
   font-size: 60px;
-  font-weight: 300;
+  font-weight: 500;
   color: var(--accent);
   line-height: 1;
   letter-spacing: -0.04em;
 }
 .step-title {
   font-family: 'Fraunces', serif;
-  font-style: italic;
+  font-style: normal;
   font-size: 38px;
   font-weight: 400;
   color: var(--text);
   letter-spacing: -0.01em;
 }
 .step-subtitle {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--muted);
   margin: 4px 0 24px 78px;
   line-height: 1.5;
@@ -534,22 +539,22 @@ label {
 .category-header:first-of-type { border-top: none; padding-top: 8px; }
 .category-title {
   font-family: 'Fraunces', serif;
-  font-style: italic;
+  font-style: normal;
   font-size: 24px;
   color: var(--text);
   margin-bottom: 2px;
 }
 .category-subtitle {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--muted);
   margin-bottom: 18px;
   line-height: 1.5;
 }
 
 .task-topic {
-  font-style: italic;
+  font-style: normal;
   color: var(--accent);
-  font-size: 14px;
+  font-size: 16px;
   margin: 6px 0;
 }
 </style>
