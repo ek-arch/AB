@@ -507,6 +507,7 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 # ============================================================
 CONFIG_FILE = Path("config.json")
 SNAPSHOTS_FILE = Path("snapshots.json")
+TASKS_FILE = Path("tasks.json")
 
 DEFAULT_OWNED = [
     "bruiaka.com",
@@ -614,6 +615,22 @@ def load_snapshots():
         except Exception:
             return {}
     return {}
+
+
+def load_tasks():
+    if TASKS_FILE.exists():
+        try:
+            return json.loads(TASKS_FILE.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+def save_tasks(tasks):
+    try:
+        TASKS_FILE.write_text(json.dumps(tasks, indent=2))
+    except Exception:
+        pass
 
 
 def save_snapshot(task_id, data):
@@ -1173,38 +1190,107 @@ def render_strategy():
     elif pplx_result and "error" in pplx_result:
         st.error(f"Perplexity: {pplx_result['error']}")
 
-    # ---------- Action list ----------
+    # ---------- Action plan (editable tasks) ----------
     gaps = evaluate_gaps(organic, kg_present, pplx_mentioned)
-    missing = [g for g in gaps if not g["present"]]
-    have = [g for g in gaps if g["present"]]
-    missing.sort(key=lambda g: g["priority"])
+    tasks = load_tasks()
+
+    status_options = ["todo", "in progress", "done"]
+    priority_label = {1: "P1", 2: "P2", 3: "P3"}
+    priority_color = {1: "var(--bad)", 2: "var(--warn)", 3: "var(--muted)"}
+    status_order = {"todo": 0, "in progress": 1, "done": 2}
+
+    items = []
+    for g in gaps:
+        default_status = "done" if g["present"] else "todo"
+        saved = tasks.get(g["label"], {})
+        items.append({
+            "label": g["label"],
+            "why": g["why"],
+            "action": g["action"],
+            "priority": g["priority"],
+            "status": saved.get("status", default_status),
+            "url": saved.get("url", ""),
+            "notes": saved.get("notes", ""),
+            "auto_present": g["present"],
+        })
+
+    items.sort(key=lambda i: (status_order[i["status"]], i["priority"]))
+
+    counts = {"todo": 0, "in progress": 0, "done": 0}
+    for i in items:
+        counts[i["status"]] += 1
 
     st.markdown(
-        f'<div class="section-title">What to do next <small>{len(missing)} gaps · prioritized</small></div>',
+        f'<div class="section-title">Action plan <small>{counts["todo"]} todo · {counts["in progress"]} doing · {counts["done"]} done</small></div>',
         unsafe_allow_html=True,
     )
-    priority_label = {1: "P1 · do first", 2: "P2", 3: "P3"}
-    priority_color = {1: "var(--bad)", 2: "var(--warn)", 3: "var(--muted)"}
-    for g in missing:
-        st.markdown(
-            f"""
-            <div class="result-row" style="grid-template-columns: 90px 1fr 110px;">
-              <div class="result-pos" style="font-size: 11px; color: {priority_color[g['priority']]}; text-transform: uppercase; letter-spacing: 0.12em; font-family: 'JetBrains Mono', monospace;">{priority_label[g['priority']]}</div>
-              <div class="result-body">
-                <div class="result-title">{escape_html(g['label'])}</div>
-                <div class="result-snippet" style="margin-bottom: 6px;"><strong>Why:</strong> {escape_html(g['why'])}</div>
-                <div class="result-snippet"><strong>Action:</strong> {escape_html(g['action'])}</div>
-              </div>
-              <div class="tag negative">MISSING</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
 
-    if have:
-        with st.expander(f"Already in place ({len(have)})"):
-            for g in have:
-                st.markdown(f"- ✓ **{g['label']}** — {g['why']}")
+    changed = False
+    for it in items:
+        label = it["label"]
+        with st.container(border=True):
+            head_cols = st.columns([1, 5, 2])
+            with head_cols[0]:
+                st.markdown(
+                    f'<div style="font-size:10px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:8px;">{priority_label[it["priority"]]}</div>',
+                    unsafe_allow_html=True,
+                )
+            with head_cols[1]:
+                st.markdown(f"**{escape_html(label)}**")
+            with head_cols[2]:
+                new_status = st.selectbox(
+                    "Status",
+                    status_options,
+                    index=status_options.index(it["status"]),
+                    key=f"status_{label}",
+                    label_visibility="collapsed",
+                )
+
+            st.caption(f"**Why:** {it['why']}")
+            st.caption(f"**Action:** {it['action']}")
+
+            link_cols = st.columns([3, 2])
+            with link_cols[0]:
+                new_url = st.text_input(
+                    "Proof URL",
+                    value=it["url"],
+                    placeholder="https://... (the published article, profile, etc.)",
+                    key=f"url_{label}",
+                    label_visibility="collapsed",
+                )
+            with link_cols[1]:
+                new_notes = st.text_input(
+                    "Notes",
+                    value=it["notes"],
+                    placeholder="notes (optional)",
+                    key=f"notes_{label}",
+                    label_visibility="collapsed",
+                )
+
+            if (
+                new_status != it["status"]
+                or new_url != it["url"]
+                or new_notes != it["notes"]
+            ):
+                tasks[label] = {
+                    "status": new_status,
+                    "url": new_url,
+                    "notes": new_notes,
+                }
+                changed = True
+
+            if new_url and new_status == "done":
+                st.markdown(
+                    f'<div style="font-size:11px;"><a href="{escape_html(new_url)}" target="_blank">↗ {escape_html(new_url)}</a></div>',
+                    unsafe_allow_html=True,
+                )
+
+            if it["auto_present"] and new_status != "done":
+                st.caption("⚐ Auto-detected on page 1 — consider marking as done.")
+
+    if changed:
+        save_tasks(tasks)
+        st.rerun()
 
 
 def render_welcome():
