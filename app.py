@@ -1392,11 +1392,6 @@ def render_strategy():
         """
         <div class="query-display">
           <div class="query-text">andrii bruiaka</div>
-          <div class="query-meta">
-            <span>Goal · <strong>OWN PAGE 1 WITH POSITIVE CONTENT</strong></span>
-            <span>Engine · <strong>GOOGLE + LLMs</strong></span>
-            <span class="accent">3 steps · measure · then act</span>
-          </div>
         </div>
         """,
         unsafe_allow_html=True,
