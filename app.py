@@ -2142,7 +2142,7 @@ def render_step1(primary_task, serp_result, config):
             full_snippet = r.get("snippet") or ""
             snippet = escape_html(full_snippet)
 
-            row_cols = st.columns([0.5, 7, 1.2, 1])
+            row_cols = st.columns([0.5, 7, 1.2, 1], vertical_alignment="center")
             with row_cols[0]:
                 st.markdown(
                     f'<div style="font-family: \'Fraunces\', serif; font-size: 28px; font-weight: 500; color: var(--muted); padding-top: 8px;">{i+1:02d}</div>',
@@ -2165,7 +2165,7 @@ def render_step1(primary_task, serp_result, config):
                 )
             with row_cols[2]:
                 st.markdown(
-                    f'<div class="tag {cls}" style="margin-top: 10px;">{cls}</div>',
+                    f'<div class="tag {cls}">{cls}</div>',
                     unsafe_allow_html=True,
                 )
             with row_cols[3]:

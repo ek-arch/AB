@@ -203,11 +203,6 @@ html, body, .stApp { color: var(--vm-body); }
 .stApp [data-testid="stHorizontalBlock"] {
   gap: 8px !important;
 }
-.stApp [data-testid="column"] {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-}
 .stApp .stButton > button[kind="primary"] {
   background: var(--vm-blue) !important;
   border: 1px solid var(--vm-blue) !important;
