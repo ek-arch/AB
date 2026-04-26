@@ -625,6 +625,14 @@ section[data-testid="stSidebar"] [data-testid="stBaseButton-headerNoPadding"] {
 
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
+# Drop-in design system (deep-navy theme). Loaded AFTER CUSTOM_CSS so its base
+# overrides (typography, buttons, sidebar surface) win the cascade.
+try:
+    from components import inject_css as _inject_design_css
+    _inject_design_css()
+except Exception:
+    pass
+
 # ============================================================
 # CONSTANTS
 # ============================================================
@@ -929,78 +937,96 @@ ACTION_CATEGORIES = [
     {
         "id": "press",
         "title": "Articles & press placements",
-        "subtitle": "Each one is a page-1 SERP slot owned by a high-trust outlet, plus citation fodder for LLMs. Pitch concrete angles, not bios.",
+        "subtitle": "Each placement = a page-1 SERP slot on a high-trust domain plus citation fodder for LLMs. Realistic friction noted in each action.",
         "tasks": [
             {
-                "label": "Finextra — bylined column or founder profile",
+                "label": "Finextra Member Blog — self-publish under your profile",
                 "priority": 1,
-                "topic": "\"How small fintechs rebuild infrastructure without 50-person engineering teams\" — drawn from Onicore",
-                "why": "Tier-1 fintech outlet. Always ranks page-1 for founder names.",
-                "action": "Email pitch to editor@finextra.com (or LinkedIn-DM the relevant editor). 200 words, 3 angle options, 1 concrete data point from Onicore.",
+                "effort": 2,
+                "topic": "\"How small fintechs rebuild infrastructure without 50-person engineering teams\" — Onicore POV",
+                "why": "Finextra has no public editor inbox for cold pitches. The realistic path that ranks page-1 for founder names is the free Member Blog: your own author profile + posts on finextra.com/blogposts.",
+                "action": "Register at finextra.com/register, complete the Member profile (headshot, company, bio, links). Publish first post via Member Blog. Author page goes live at finextra.com/blogs/<slug> and indexes within days. Editorial picks-up happen organically once you have 2-3 posts.",
                 "domains": ["finextra.com"],
             },
             {
-                "label": "Sifted — founder profile",
-                "priority": 1,
-                "topic": "\"Eastern-European founders quietly rebuilding the EU fintech stack\" (you as one of 3-4)",
-                "why": "Read by EU VCs and journalists. Profile pieces rank for the name.",
-                "action": "Pitch news desk via tips@sifted.eu. Reference recent Sifted coverage to show fit.",
-                "domains": ["sifted.eu"],
-            },
-            {
                 "label": "The Fintech Times — guest contributor",
-                "priority": 1,
+                "priority": 2,
+                "effort": 3,
                 "topic": "\"Embedded finance is dead — long live infrastructure-as-a-service\" POV piece",
-                "why": "Easier to land than Finextra/Sifted, ranks well for founder name.",
-                "action": "Submit at thefintechtimes.com/contribute or email editor@thefintechtimes.com. They take strong opinion pieces.",
+                "why": "Takes guest contributions but most slots come through their PR partnership program (paid) or existing relationships. Cold submissions go to a slow queue.",
+                "action": "Two-track: (a) submit via thefintechtimes.com/submit-an-article-or-news-story with a finished draft (4-8 week response window, ~30% accept rate); (b) pitch via LinkedIn DM to a named TFT editor — find recent bylines, reference one. Don't expect a cold-email reply from a generic inbox.",
                 "domains": ["thefintechtimes.com"],
             },
             {
-                "label": "Banking Dive — interview or quote",
+                "label": "Sifted — founder profile or quote",
                 "priority": 2,
-                "topic": "Compliance / fraud prevention angle — quoteable on operational fintech infrastructure",
-                "why": "Tier-1 in US banking media. Quotes ride the name in search.",
-                "action": "Pitch yourself as a source on Help a B2B Writer / Featured. Or DM Banking Dive reporters on LinkedIn.",
-                "domains": ["bankingdive.com"],
+                "effort": 4,
+                "topic": "Eastern-European founders rebuilding EU fintech infra (panel piece, you as one of 3-4)",
+                "why": "Sifted essentially does not run unsolicited founder profiles. Realistic entry is being a quoted source on a story they're already writing, or a news hook (raise, partnership, regulatory move) plus a warm intro.",
+                "action": "(a) Set up alerts on a few Sifted reporters covering fintech infra (Amy O'Brien, Tom Matsuda) and reply to their X/LinkedIn posts with substantive takes. (b) When you have a news hook, pitch via warm intro from an existing Sifted source (other founder, VC). (c) Set up a Featured.com / Qwoted profile to be source-able.",
+                "domains": ["sifted.eu"],
             },
             {
-                "label": "Coindesk or Decrypt — bylined",
+                "label": "Banking Dive / Payments Dive — get quoted as a source",
                 "priority": 2,
-                "topic": "\"Why crypto UX still fails: passkeys, recovery, and the seed-phrase problem\" — drawn from Kolo wallet work",
-                "why": "Crypto-native outlets index quickly and feed LLMs. Builds the crypto-UX angle of the brand.",
-                "action": "Pitch contribute@coindesk.com or contributors@decrypt.co with full draft + author bio.",
-                "domains": ["coindesk.com", "decrypt.co"],
+                "effort": 2,
+                "topic": "Compliance / fraud-prevention angle — operational fintech infra commentary",
+                "why": "Banking Dive doesn't take guest pieces and rarely profiles individuals. Reliable path is being a named source in their own reporting.",
+                "action": "Sign up on Featured.com, Qwoted, and Help a B2B Writer (free). Answer 2-3 prompts/week tagged compliance/fintech. Banking Dive reporters use these. Each accepted quote = your name + Onicore in a Banking Dive byline.",
+                "domains": ["bankingdive.com", "paymentsdive.com"],
             },
             {
-                "label": "HackerNoon — contributor profile + 2 articles",
+                "label": "Crypto press — Decrypt / Cointelegraph / The Block",
+                "priority": 2,
+                "effort": 3,
+                "topic": "\"Why crypto UX still fails: passkeys, recovery, and the seed-phrase problem\" — Kolo wallet POV",
+                "why": "Coindesk's contributor program was wound down post-restructuring; cold pitches there are unproductive. Decrypt/Cointelegraph still take guest posts but mostly via paid placement or via PR firms. Editorial coverage requires news.",
+                "action": "Two paths: (a) bylined sponsored content via PR agency (Wachsman, MarketAcross — $$$ but reliably indexes for the name); (b) earned: pitch a reporter (Decrypt's Mat Di Salvo, CT's Helen Partz) only with hard data — not opinions. Lead with a chart or a number from Kolo.",
+                "domains": ["decrypt.co", "cointelegraph.com", "theblock.co"],
+            },
+            {
+                "label": "HackerNoon — contributor + 2 articles",
                 "priority": 3,
+                "effort": 2,
                 "topic": "Technical post-mortems of building Onicore / Kolo. Long-form, code-light.",
-                "why": "Lowest bar of all tier-2 outlets. Author page itself ranks for the name.",
-                "action": "Sign up at hackernoon.com/contribute. Publish 2 pieces back-to-back so author page has weight.",
+                "why": "Sign-up is open but every submission goes through editorial review (1-3 weeks, ~50% accept rate). Author page ranks for the name once you have 2+ posts.",
+                "action": "Register at hackernoon.com → submit first draft via the editor. Once accepted, the @username profile is live. Submit second piece within 30 days so the author page has weight.",
                 "domains": ["hackernoon.com"],
             },
             {
+                "label": "Substack-syndicated newsletters — be the guest writer",
+                "priority": 2,
+                "effort": 2,
+                "topic": "Guest essays on Fintech Brainfood (Simon Taylor), Net Interest, Popular Fintech",
+                "why": "Faster than tier-1 press. Each newsletter has 10K-50K fintech readers + the post lives on a substack.com URL that ranks for the name.",
+                "action": "DM the writer with a 3-bullet pitch + 1 paragraph teaser. Reference one of their recent issues. Conversion rate ~30% if the angle is sharp.",
+                "domains": ["substack.com"],
+            },
+            {
                 "label": "Podcast — Fintech Insider (11:FS)",
-                "priority": 1,
+                "priority": 2,
+                "effort": 4,
                 "topic": "\"Building fintech infrastructure outside the big-bank stack\"",
-                "why": "Industry-defining podcast. Episode show notes rank page-1 for guest names.",
-                "action": "Pitch via 11fs.com/podcast/contact. Reference 2 recent episodes you'd extend on.",
+                "why": "Highly relationship-driven booking. Cold form-fills via 11fs.com rarely convert. Realistic path is via a current/former 11:FS person or an existing guest who can intro.",
+                "action": "Map your 2nd-degree LinkedIn connections to 11:FS staff (David Brear, Jason Bates, Simon Taylor) and ask one for an intro to the booking producer. Bring a sharp angle they haven't covered, not a generic founder pitch.",
                 "domains": ["11fs.com"],
             },
             {
                 "label": "Podcast — This Week in Fintech",
                 "priority": 2,
+                "effort": 3,
                 "topic": "Founder spotlight or panel on embedded finance",
-                "why": "Weekly cadence + active newsletter audience.",
-                "action": "Email nik@thisweekinfintech.com with a 1-paragraph pitch.",
+                "why": "TWIF is primarily a newsletter; the podcast slots are limited and booked by Nik Milanović personally. Cold email works better than for 11:FS but still <20% reply rate.",
+                "action": "Email Nik with a 1-paragraph pitch + 1 specific TWIF newsletter issue you'd extend on. Subscribing + commenting in the TWIF community Slack ahead of pitching helps. Don't pitch for a generic founder spot — pitch for a panel he's already running.",
                 "domains": ["thisweekinfintech.com"],
             },
             {
                 "label": "TechCrunch / Forbes coverage",
                 "priority": 1,
-                "topic": "Onicore funding announcement, partnership, or product launch (news hook required)",
-                "why": "Single biggest entity-recognition trigger for Google. Once you have one, KG often follows.",
-                "action": "Don't pitch a profile cold — wait for a news hook (raise, partnership, customer milestone), then pitch via warm intro.",
+                "effort": 5,
+                "topic": "Onicore funding announcement, partnership, or product launch — news hook required",
+                "why": "Single biggest entity-recognition trigger for Google. Once you have one, KG entry often follows.",
+                "action": "Don't pitch a profile cold (won't work). Wait for a news hook (raise, named-customer milestone, regulatory first). Engage a tier-1 PR firm 6 weeks out, or get a warm intro from a portfolio-company founder. Forbes Council membership ($1.7K/yr) is a paid shortcut to forbes.com author page.",
                 "domains": ["techcrunch.com", "forbes.com"],
             },
         ],
@@ -1008,140 +1034,158 @@ ACTION_CATEGORIES = [
     {
         "id": "profiles",
         "title": "Profile sites — claim or register",
-        "subtitle": "Each profile = a SERP slot you control with your own copy. Most rank for the name within days. Free.",
+        "subtitle": "Each profile = a SERP slot you control with your own copy. Most rank for the name within days. Most are free.",
         "tasks": [
-            {
-                "label": "Wikidata entry",
-                "priority": 1,
-                "why": "Lower bar than Wikipedia. Feeds Google Knowledge Graph + read as authoritative by ChatGPT/Perplexity/Claude.",
-                "action": "Create at wikidata.org/wiki/Special:NewItem. Need ≥2 third-party reliable sources to cite (use any tier-1 press once landed).",
-                "domains": ["wikidata.org"],
-            },
             {
                 "label": "Crunchbase person page",
                 "priority": 1,
+                "effort": 1,
                 "why": "Always ranks for founder names. Drives entity recognition. Links to founded companies.",
-                "action": "Sign up at crunchbase.com → create person → link Onicore, Nonbank.io, Kolo. Add headshot + bio + LinkedIn.",
+                "action": "crunchbase.com → sign up free → 'Add a person' → create profile, link Onicore + Nonbank.io + Kolo, add headshot + bio + LinkedIn. Pro account ($49/mo) only needed if editing existing org pages.",
                 "domains": ["crunchbase.com"],
-            },
-            {
-                "label": "AngelList / Wellfound founder profile",
-                "priority": 2,
-                "why": "Founder-focused, ranks well for the name + 'founder' qualifier.",
-                "action": "Sign up at wellfound.com → mark as founder → link companies.",
-                "domains": ["wellfound.com", "angel.co"],
-            },
-            {
-                "label": "F6S profile",
-                "priority": 2,
-                "why": "Startup-ecosystem directory, indexes fast.",
-                "action": "Create at f6s.com → list all ventures + investments + advisor roles.",
-                "domains": ["f6s.com"],
             },
             {
                 "label": "GitHub profile",
                 "priority": 2,
-                "why": "Easy 10-min win. Ranks for technical founder names. Read by LLMs.",
-                "action": "github.com/andriibruiaka — bio, link to bruiaka.com, pin 3 repos (even if just docs/specs).",
+                "effort": 1,
+                "why": "10-min win. Ranks for technical founder names. Read by LLMs.",
+                "action": "github.com/andriibruiaka — fill bio, link bruiaka.com, pin 3 repos (even if just docs/specs).",
                 "domains": ["github.com"],
-            },
-            {
-                "label": "Speakerhub profile",
-                "priority": 2,
-                "why": "Pulls inbound podcast and conference invitations — feeds the press category.",
-                "action": "Sign up at speakerhub.com → list 3 talk topics matching the brand pillars (fintech infra, embedded finance, crypto UX).",
-                "domains": ["speakerhub.com"],
-            },
-            {
-                "label": "Hashnode author profile",
-                "priority": 3,
-                "why": "Indexes fast, ranks well for technical author names.",
-                "action": "hashnode.com → claim @andriibruiaka or similar. Cross-post 1 article.",
-                "domains": ["hashnode.com"],
-            },
-            {
-                "label": "Dev.to author profile",
-                "priority": 3,
-                "why": "Same as Hashnode — author page ranks.",
-                "action": "dev.to/andriibruiaka. Cross-post the same article (with canonical link to Substack).",
-                "domains": ["dev.to"],
-            },
-            {
-                "label": "Medium author profile",
-                "priority": 3,
-                "why": "medium.com/@<name> ranks page-1 for many founder names.",
-                "action": "Set vanity URL to @andriibruiaka. Cross-post 1 cornerstone article.",
-                "domains": ["medium.com"],
             },
             {
                 "label": "AllMyLinks profile",
                 "priority": 3,
-                "why": "Aggregator that ranks for the name. Acts as a meta-bio when nothing else exists.",
-                "action": "allmylinks.com/andriibruiaka — link every other profile here. 5-min setup.",
+                "effort": 1,
+                "why": "Aggregator that ranks for the name. Acts as a meta-bio when nothing else exists yet.",
+                "action": "allmylinks.com/andriibruiaka — link every other profile. 5-min setup.",
                 "domains": ["allmylinks.com"],
+            },
+            {
+                "label": "Hashnode author profile + 1 cross-post",
+                "priority": 3,
+                "effort": 1,
+                "why": "Indexes fast, ranks well for technical author names.",
+                "action": "hashnode.com → claim @andriibruiaka. Cross-post 1 Substack article (use canonical URL).",
+                "domains": ["hashnode.com"],
+            },
+            {
+                "label": "Dev.to author profile + 1 cross-post",
+                "priority": 3,
+                "effort": 1,
+                "why": "Same as Hashnode — author page ranks.",
+                "action": "dev.to/andriibruiaka. Cross-post the same article with canonical link to Substack.",
+                "domains": ["dev.to"],
+            },
+            {
+                "label": "Medium author profile + 1 cross-post",
+                "priority": 3,
+                "effort": 1,
+                "why": "medium.com/@<name> ranks page-1 for many founder names.",
+                "action": "Set vanity URL to @andriibruiaka. Cross-post 1 cornerstone article with canonical to Substack.",
+                "domains": ["medium.com"],
+            },
+            {
+                "label": "F6S profile",
+                "priority": 3,
+                "effort": 1,
+                "why": "Startup-ecosystem directory, indexes fast for founder names.",
+                "action": "f6s.com → list all ventures + advisor roles + investor profile.",
+                "domains": ["f6s.com"],
             },
             {
                 "label": "X / Twitter — verified handle, complete bio",
                 "priority": 2,
+                "effort": 1,
                 "why": "Profile cards appear in some Google name searches and feed Grok/ChatGPT.",
-                "action": "Confirm @ matches the brand. Bio with link to bruiaka.com. Verified ($8/mo) helps for entity recognition.",
+                "action": "Confirm @ matches the brand. Bio = name + role + company + link to bruiaka.com. Verified ($8/mo) noticeably helps entity recognition.",
                 "domains": ["twitter.com", "x.com"],
+            },
+            {
+                "label": "AngelList / Wellfound founder profile",
+                "priority": 2,
+                "effort": 2,
+                "why": "Founder-focused, ranks well for the name + 'founder' qualifier.",
+                "action": "wellfound.com → mark as founder → link companies + add 200-word bio. (5-min create, but wellfound profiles take 1-2 days to start ranking.)",
+                "domains": ["wellfound.com", "angel.co"],
+            },
+            {
+                "label": "Speakerhub profile",
+                "priority": 2,
+                "effort": 2,
+                "why": "Pulls inbound podcast and conference invitations — feeds the press category.",
+                "action": "speakerhub.com → list 3 talk topics matching brand pillars (fintech infra, embedded finance, crypto UX). Inbound conversion takes 4-8 weeks.",
+                "domains": ["speakerhub.com"],
             },
             {
                 "label": "Reddit — earn karma, one organic mention",
                 "priority": 3,
-                "why": "LLMs (especially ChatGPT) rely heavily on Reddit. One thread can move AI answers.",
-                "action": "Build account karma by commenting in r/fintech, r/startups for 4 weeks. Then post a Show & Tell or AMA tied to a launch.",
+                "effort": 5,
+                "why": "LLMs (especially ChatGPT) lean heavily on Reddit. One thread can move AI answers.",
+                "action": "Multi-week play: build account karma by commenting in r/fintech / r/startups / r/CryptoCurrency for 4 weeks. Then post a Show & Tell or AMA tied to a real launch. Cold posting w/o karma gets shadow-banned.",
                 "domains": ["reddit.com"],
+            },
+            {
+                "label": "Wikidata entry",
+                "priority": 1,
+                "effort": 4,
+                "why": "Lower bar than Wikipedia. Feeds Google Knowledge Graph + read as authoritative by ChatGPT/Perplexity/Claude.",
+                "action": "Realistic prerequisite: 2+ tier-1 third-party sources (Finextra/TFT/TC/Forbes). Without them the entry gets nominated for deletion within 30 days. Sequence: land press first → then create at wikidata.org/wiki/Special:NewItem with full statements (occupation, employer, founder of, sameAs).",
+                "domains": ["wikidata.org"],
             },
         ],
     },
     {
         "id": "owned",
         "title": "Owned web properties",
-        "subtitle": "Sites you fully control. Add Person schema markup for entity recognition; cross-link aggressively.",
+        "subtitle": "Sites you fully control. Add Person schema for entity recognition; cross-link aggressively.",
         "tasks": [
             {
-                "label": "bruiaka.com — Person schema.org markup",
+                "label": "andriibruiaka.com — confirm ownership + add to Owned Domains",
                 "priority": 1,
-                "why": "Tells Google explicitly 'this site is the person Andrii Bruiaka.' Single biggest on-page Knowledge Graph signal.",
-                "action": "Add JSON-LD Person schema to homepage with name, jobTitle, worksFor (Onicore), sameAs (LinkedIn, Substack, Crunchbase, Wikidata once live).",
-                "domains": [],
-            },
-            {
-                "label": "andriibruiaka.com — confirm ownership + add to owned list",
-                "priority": 1,
-                "why": "Perplexity already cites it. Make sure it's officially owned and matches brand.",
-                "action": "Add 'andriibruiaka.com' to Settings → Owned Domains in this dashboard. Add Person schema mirroring bruiaka.com.",
+                "effort": 1,
+                "why": "Perplexity already cites it. Make sure it's officially owned and counted in this dashboard's saturation score.",
+                "action": "Settings → Owned Domains → add 'andriibruiaka.com'. Save. (5 seconds inside this app.)",
                 "domains": ["andriibruiaka.com"],
             },
             {
-                "label": "Cornerstone Substack post: \"Andrii Bruiaka — what I work on\"",
-                "priority": 1,
-                "topic": "Bio-style post with name in title, URL slug, and H1. Links to bruiaka.com and all owned profiles.",
-                "why": "Substack ranks fast and acts as a canonical bio answering 'who is...' queries.",
-                "action": "Title: \"Andrii Bruiaka: building fintech infrastructure\". URL slug: /p/andrii-bruiaka. Internal-link to all profile URLs.",
-                "domains": ["substack.com"],
-            },
-            {
-                "label": "Substack — author/about page with structured data",
+                "label": "Substack 'About' page polish",
                 "priority": 2,
+                "effort": 2,
                 "why": "About page is what LLMs hit for bio queries. Make it crawlable and entity-tagged.",
-                "action": "Substack 'About' → name in H1, professional bio (3 paragraphs), links to all founded companies + profiles.",
+                "action": "Substack dashboard → Settings → About → name in H1, 3-paragraph professional bio, links to all founded companies + profiles. ~30 min.",
                 "domains": ["substack.com"],
             },
             {
-                "label": "Onicore.io — founder bio page linking back",
+                "label": "Cornerstone Substack post: bio-style canonical",
+                "priority": 1,
+                "effort": 3,
+                "topic": "\"Andrii Bruiaka — what I work on\" — name in title, URL slug, H1, plus links to bruiaka.com and every owned profile",
+                "why": "Substack ranks fast and acts as a canonical bio answering 'who is...' queries.",
+                "action": "Title: \"Andrii Bruiaka: building fintech infrastructure\". URL slug /p/andrii-bruiaka. Internal-link every profile URL. ~3 hours including writing.",
+                "domains": ["substack.com"],
+            },
+            {
+                "label": "bruiaka.com — Person schema.org JSON-LD",
+                "priority": 1,
+                "effort": 3,
+                "why": "Tells Google explicitly 'this site is the person Andrii Bruiaka.' Single biggest on-page Knowledge Graph signal.",
+                "action": "Add JSON-LD <script type=\"application/ld+json\"> in <head> with @type:Person, name, jobTitle, worksFor (Onicore), sameAs array (LinkedIn, Substack, Crunchbase, Wikidata once live). Half-day if you have CMS access; longer if you have to brief a webflow dev.",
+                "domains": [],
+            },
+            {
+                "label": "Onicore.io — founder bio block on /about",
                 "priority": 2,
+                "effort": 3,
                 "why": "Reciprocal linking from company → founder strengthens the entity graph.",
-                "action": "/about page: dedicated bio block with name as H2, photo, link to bruiaka.com and LinkedIn.",
+                "action": "Brief web team: dedicated bio block on /about (or /team) with name as H2, photo, 2-paragraph bio, link to bruiaka.com + LinkedIn. Half-day including review cycle.",
                 "domains": ["onicore.io", "onicore.ie"],
             },
             {
-                "label": "Nonbank.io — founder bio page linking back",
+                "label": "Nonbank.io — founder bio on /about or /team",
                 "priority": 2,
+                "effort": 3,
                 "why": "Same as Onicore — reciprocal entity signal.",
-                "action": "/about or /team — name as H2, link out to bruiaka.com.",
+                "action": "Brief web team: name as H2, photo, link out to bruiaka.com + LinkedIn. Half-day.",
                 "domains": ["nonbank.io"],
             },
         ],
@@ -1149,50 +1193,56 @@ ACTION_CATEGORIES = [
     {
         "id": "content",
         "title": "Content cadence",
-        "subtitle": "Recurring rhythm. Treat each as a standing task — re-mark 'done' monthly.",
+        "subtitle": "Recurring rhythm. Treat each as a standing task — re-mark monthly.",
         "tasks": [
             {
-                "label": "Monthly Substack post (cornerstone)",
-                "priority": 1,
-                "topic": "Pillars: fintech infrastructure · embedded finance · crypto UX · passkeys / auth",
-                "why": "1 post/month at 1500+ words is the bare minimum for Substack ranking.",
-                "action": "Calendar 4 topics ahead. Each post: name in author + 1 mention in body + link to /about.",
-                "domains": ["substack.com"],
+                "label": "Quarterly Wikidata refresh",
+                "priority": 3,
+                "effort": 2,
+                "why": "Every new tier-1 press piece = a new sitelink to add as evidence. Keeps the entry from being challenged.",
+                "action": "Once per quarter, add new press citations as 'reference URL' on existing statements. Update job/company if changed. ~30 min per quarter.",
+                "domains": ["wikidata.org"],
             },
             {
                 "label": "Monthly Medium cross-post",
                 "priority": 2,
+                "effort": 2,
                 "why": "Reach + author-page weight. Cross-post with canonical link back to Substack.",
-                "action": "After each Substack post, cross-post on Medium with rel=canonical to original.",
+                "action": "After each Substack post, paste into Medium → Story Settings → 'Import a story' or set canonical. ~20 min.",
                 "domains": ["medium.com"],
             },
             {
-                "label": "Bi-weekly LinkedIn long-form",
-                "priority": 2,
-                "why": "LinkedIn long-form posts surface in Google for the name.",
-                "action": "1 long-form (1000+ words) every 2 weeks. Reuse Substack content trimmed.",
-                "domains": ["linkedin.com"],
+                "label": "Monthly tier-1 outlet pitch (1 outbound)",
+                "priority": 1,
+                "effort": 3,
+                "why": "Keeps the press funnel alive. Even 1 in 5 lands = 2-3 placements/year, which moves SERP and KG.",
+                "action": "Rotate Finextra Member Blog → TFT → crypto press → Featured/Qwoted prompts. One pitch every 4 weeks. 2-3 hours per pitch including research.",
+                "domains": [],
             },
             {
                 "label": "Monthly podcast pitch (1 outbound)",
                 "priority": 1,
+                "effort": 3,
                 "why": "Forces a steady press cadence. Even 1 in 5 lands = 2-3 episodes/year, which moves both SERP and KG.",
-                "action": "Pick a podcast from the press category each month. Send pitch by 5th of month.",
+                "action": "Pick 1 podcast/month from the press category. Spend 2 hours: listen to 1 recent episode, write a pitch that explicitly extends it.",
                 "domains": [],
             },
             {
-                "label": "Monthly tier-1 outlet pitch",
+                "label": "Bi-weekly LinkedIn long-form",
+                "priority": 2,
+                "effort": 4,
+                "why": "LinkedIn long-form posts surface in Google for the name + drive inbound DMs from journalists.",
+                "action": "1 long-form (1000+ words) every 2 weeks. Cheapest source: trim a Substack post. ~3 hours each.",
+                "domains": ["linkedin.com"],
+            },
+            {
+                "label": "Monthly Substack post (cornerstone, 1500+ words)",
                 "priority": 1,
-                "why": "Same logic as podcast: keep the funnel alive.",
-                "action": "Rotate Finextra → Sifted → Fintech Times → Banking Dive. One pitch every 4 weeks.",
-                "domains": [],
-            },
-            {
-                "label": "Quarterly Wikidata refresh",
-                "priority": 3,
-                "why": "Every new tier-1 press piece = a new sitelink to add as evidence.",
-                "action": "Once per quarter, add new press citations to the Wikidata entity. Keep statements current.",
-                "domains": ["wikidata.org"],
+                "effort": 5,
+                "topic": "Pillars: fintech infrastructure · embedded finance · crypto UX · passkeys / auth",
+                "why": "1 post/month at 1500+ words is the bare minimum for Substack to rank consistently.",
+                "action": "Calendar 4 topics ahead. Each post: name in author byline, 1 mention in body, link to /about. Realistic effort: 1 day per post including drafting + edit.",
+                "domains": ["substack.com"],
             },
         ],
     },
@@ -1719,6 +1769,16 @@ def render_strategy():
     priority_label = {1: "P1", 2: "P2", 3: "P3"}
     priority_color = {1: "var(--bad)", 2: "var(--warn)", 3: "var(--muted)"}
     status_order = {"todo": 0, "in progress": 1, "done": 2}
+    effort_label = {1: "5–30 min", 2: "<2 h", 3: "½ day", 4: "multi-day", 5: "ongoing/weeks"}
+    effort_dot = {1: "●", 2: "●●", 3: "●●●", 4: "●●●●", 5: "●●●●●"}
+
+    sort_mode = st.radio(
+        "Order tasks by",
+        ["Status + priority (default)", "Quickest wins first (effort ↑)"],
+        horizontal=True,
+        key="action_sort_mode",
+        label_visibility="collapsed",
+    )
 
     total_counts = {"todo": 0, "in progress": 0, "done": 0}
     changed = False
@@ -1726,11 +1786,13 @@ def render_strategy():
     def render_task(it, cat_id, is_custom):
         nonlocal changed
         label = it["label"]
+        eff = it.get("effort", 3)
         with st.container(border=True):
             head_cols = st.columns([1, 4, 2, 1])
             with head_cols[0]:
                 st.markdown(
-                    f'<div style="font-size:13px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:6px;">{priority_label[it["priority"]]}</div>',
+                    f'<div style="font-size:13px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:6px;">{priority_label[it["priority"]]}</div>'
+                    f'<div style="font-size:11px; color:var(--muted); letter-spacing:0.08em; padding-top:2px;" title="Effort: {effort_label.get(eff, "?")}">{effort_dot.get(eff, "●●●")} {effort_label.get(eff, "")}</div>',
                     unsafe_allow_html=True,
                 )
             with head_cols[1]:
@@ -1846,7 +1908,10 @@ def render_strategy():
                 "_custom": True,
             })
 
-        items.sort(key=lambda i: (status_order[i["status"]], i["priority"]))
+        if sort_mode.startswith("Quickest"):
+            items.sort(key=lambda i: (status_order[i["status"]], i.get("effort", 3), i["priority"]))
+        else:
+            items.sort(key=lambda i: (status_order[i["status"]], i["priority"], i.get("effort", 3)))
 
         for it in items:
             total_counts[it["status"]] += 1
@@ -1856,9 +1921,17 @@ def render_strategy():
         with st.expander(f"+ Add task to '{category['title']}'"):
             with st.form(key=f"add_form_{cat_id}", clear_on_submit=True):
                 new_label = st.text_input("Task name *", key=f"new_label_{cat_id}")
-                col_p, col_t = st.columns([1, 3])
+                col_p, col_e, col_t = st.columns([1, 1, 3])
                 with col_p:
                     new_priority = st.selectbox("Priority", [1, 2, 3], key=f"new_prio_{cat_id}")
+                with col_e:
+                    new_effort = st.selectbox(
+                        "Effort",
+                        [1, 2, 3, 4, 5],
+                        index=2,
+                        format_func=lambda v: f"{v} · {effort_label[v]}",
+                        key=f"new_effort_{cat_id}",
+                    )
                 with col_t:
                     new_topic = st.text_input("Topic / angle (optional)", key=f"new_topic_{cat_id}")
                 new_why = st.text_area("Why it matters (optional)", key=f"new_why_{cat_id}", height=70)
@@ -1868,6 +1941,7 @@ def render_strategy():
                     custom.setdefault(cat_id, []).append({
                         "label": new_label.strip(),
                         "priority": new_priority,
+                        "effort": new_effort,
                         "topic": new_topic.strip(),
                         "why": new_why.strip(),
                         "action": new_action.strip(),

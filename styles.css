@@ -1,0 +1,339 @@
+/* =============================================================
+   Visibility Monitor — design system
+   Drop-in stylesheet. Inject once via inject_css() in components.py
+   ============================================================= */
+
+:root {
+  --vm-bg: #ffffff;
+  --vm-panel: #f7f8fa;
+  --vm-panel-blue: #eaf0f7;
+  --vm-ink: #0c1220;
+  --vm-body: #222a3a;
+  --vm-muted: #6b7488;
+  --vm-faint: #aab2c2;
+  --vm-line: #e3e6ec;
+  --vm-line-strong: #cdd3df;
+
+  --vm-blue: #1d4d7a;
+  --vm-blue-deep: #0f2f4d;
+  --vm-blue-soft: #d6e3ee;
+
+  --vm-green: #1f7a3f;
+  --vm-green-soft: #dff0e5;
+  --vm-bad: #b3251f;
+  --vm-bad-soft: #fbe0de;
+
+  --vm-radius: 10px;
+  --vm-radius-sm: 6px;
+
+  --vm-font: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont,
+             "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* ---------- Global ---------- */
+html, body, [class*="st-"], [class*="css-"] {
+  font-family: var(--vm-font) !important;
+  letter-spacing: -0.005em;
+  color: var(--vm-body);
+}
+
+.stApp { background: var(--vm-bg); }
+
+/* Hide Streamlit chrome we don't need (keep "Manage app" link) */
+#MainMenu { visibility: hidden; }
+header[data-testid="stHeader"] { background: transparent; height: 0; }
+footer { visibility: hidden; }
+
+/* Tighter main container */
+section.main > div.block-container {
+  padding-top: 1.6rem;
+  padding-bottom: 3rem;
+  max-width: 1200px;
+}
+
+/* ---------- Sidebar ---------- */
+[data-testid="stSidebar"] {
+  background: var(--vm-panel);
+  border-right: 1px solid var(--vm-line);
+}
+[data-testid="stSidebar"] > div:first-child { padding-top: 1.5rem; }
+
+[data-testid="stSidebar"] hr {
+  border: none;
+  border-top: 1px solid var(--vm-line);
+  margin: 1rem 0;
+}
+
+/* ---------- Headings ---------- */
+.vm-h1 {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--vm-ink);
+  letter-spacing: -0.025em;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.1;
+}
+.vm-lede {
+  font-size: 14px;
+  color: var(--vm-body);
+  max-width: 760px;
+  line-height: 1.55;
+  margin: 0 0 1.4rem 0;
+}
+.vm-lede strong { color: var(--vm-ink); font-weight: 600; }
+.vm-lede .vm-q {
+  background: var(--vm-blue-soft);
+  color: var(--vm-blue-deep);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Section eyebrow with badge */
+.vm-eyebrow {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: var(--vm-muted);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+.vm-eyebrow .vm-badge-num {
+  background: var(--vm-blue); color: #fff;
+  padding: 2px 7px; border-radius: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+}
+.vm-eyebrow .vm-dot { color: var(--vm-faint); }
+
+/* ---------- Status connector chip (sidebar) ---------- */
+.vm-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--vm-ink); font-weight: 500;
+  padding: 8px 12px;
+  background: var(--vm-green-soft);
+  border-radius: 8px;
+}
+.vm-status .vm-pulse {
+  position: relative; display: inline-block; width: 8px; height: 8px;
+}
+.vm-status .vm-pulse::before,
+.vm-status .vm-pulse::after {
+  content: ""; position: absolute; border-radius: 50%; background: var(--vm-green);
+}
+.vm-status .vm-pulse::before { inset: 0; }
+.vm-status .vm-pulse::after  { inset: -3px; opacity: 0.25; }
+
+/* ---------- Buttons (Streamlit overrides) ---------- */
+.stButton > button {
+  font-family: var(--vm-font);
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid var(--vm-line);
+  background: var(--vm-bg);
+  color: var(--vm-body);
+  padding: 0.55rem 0.9rem;
+  transition: background 120ms, border-color 120ms, transform 80ms;
+}
+.stButton > button:hover {
+  border-color: var(--vm-line-strong);
+  background: var(--vm-panel);
+}
+.stButton > button:active { transform: translateY(1px); }
+
+/* Primary button (kind="primary") */
+.stButton > button[kind="primary"] {
+  background: var(--vm-blue) !important;
+  border: 1px solid var(--vm-blue) !important;
+  color: #fff !important;
+  font-weight: 600;
+  box-shadow: 0 1px 0 rgba(15, 47, 77, 0.3),
+              0 4px 14px rgba(29, 77, 122, 0.28);
+}
+.stButton > button[kind="primary"]:hover {
+  background: var(--vm-blue-deep) !important;
+  border-color: var(--vm-blue-deep) !important;
+}
+
+/* ---------- Inputs ---------- */
+.stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div {
+  border-radius: 8px !important;
+  border-color: var(--vm-line) !important;
+  font-family: var(--vm-font) !important;
+}
+
+/* ---------- Stat cards grid ---------- */
+.vm-stats { display: grid; grid-template-columns: 1fr 1fr 1.15fr; gap: 12px; margin-bottom: 28px; }
+.vm-stat {
+  background: var(--vm-bg);
+  border: 1px solid var(--vm-line);
+  border-radius: var(--vm-radius);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.vm-stat--priority {
+  background: linear-gradient(180deg, var(--vm-panel-blue) 0%, var(--vm-bg) 100%);
+  border-color: var(--vm-line-strong);
+}
+.vm-stat__label {
+  font-size: 10.5px;
+  color: var(--vm-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.vm-stat--priority .vm-stat__label { color: var(--vm-blue-deep); font-weight: 600; }
+.vm-stat__big {
+  display: flex; align-items: baseline; gap: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+.vm-stat__num { font-size: 48px; font-weight: 600; color: var(--vm-ink); }
+.vm-stat__den { font-size: 22px; color: var(--vm-faint); letter-spacing: -0.02em; }
+.vm-stat__caption { font-size: 12px; color: var(--vm-body); margin-top: 10px; }
+.vm-stat__caption strong { color: var(--vm-ink); font-weight: 600; }
+
+.vm-stat__missing {
+  font-size: 32px; color: var(--vm-bad); font-weight: 700; letter-spacing: -0.03em;
+}
+.vm-stat__desc {
+  font-size: 12.5px; color: var(--vm-body); margin-top: 10px; line-height: 1.5; max-width: 300px;
+}
+
+/* Tag pills inline */
+.vm-tag {
+  padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.vm-tag--strong { background: var(--vm-green-soft); color: var(--vm-green); }
+.vm-tag--priority {
+  background: var(--vm-blue); color: #fff;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em; padding: 1px 6px; border-radius: 3px;
+}
+
+/* Saturation bar */
+.vm-bar { display: flex; gap: 3px; margin-top: 12px; }
+.vm-bar__seg { height: 8px; flex: 1; border-radius: 2px; background: var(--vm-line); }
+.vm-bar__seg--on { background: var(--vm-blue); }
+
+/* Stacked bar */
+.vm-stacked {
+  display: flex; height: 8px; margin-top: 12px;
+  border-radius: 2px; overflow: hidden; background: var(--vm-line);
+}
+.vm-stacked__seg { height: 100%; }
+.vm-stacked__seg--owned    { background: var(--vm-blue); }
+.vm-stacked__seg--earned   { background: var(--vm-blue-soft); }
+.vm-stacked__seg--neutral  { background: var(--vm-faint); }
+.vm-stacked__seg--negative { background: var(--vm-bad); }
+
+.vm-legend {
+  font-size: 11.5px; color: var(--vm-body);
+  margin-top: 10px; display: flex; flex-wrap: wrap; gap: 2px 10px;
+}
+.vm-legend__item { display: inline-flex; align-items: center; gap: 5px; }
+.vm-legend__sw {
+  display: inline-block; width: 6px; height: 6px; border-radius: 1px;
+}
+.vm-legend__sw--owned    { background: var(--vm-blue); }
+.vm-legend__sw--earned   { background: var(--vm-blue-soft); }
+.vm-legend__sw--neutral  { background: var(--vm-faint); }
+.vm-legend__sw--negative { background: var(--vm-bad); }
+
+/* ---------- Results ---------- */
+.vm-results-head {
+  display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;
+}
+.vm-results-head__title {
+  font-size: 16px; font-weight: 600; color: var(--vm-ink);
+  letter-spacing: -0.015em;
+}
+.vm-results-head__count {
+  background: var(--vm-panel); color: var(--vm-muted);
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 500; margin-left: 10px;
+}
+
+.vm-results {
+  background: var(--vm-bg);
+  border: 1px solid var(--vm-line);
+  border-radius: var(--vm-radius);
+  overflow: hidden;
+}
+.vm-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 110px 70px;
+  padding: 16px 18px; gap: 14px; align-items: start;
+}
+.vm-row + .vm-row { border-top: 1px solid var(--vm-line); }
+.vm-row--negative { background: rgba(251, 224, 222, 0.33); }
+
+.vm-row__num {
+  width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: var(--vm-panel); color: var(--vm-muted);
+}
+.vm-row__num--owned    { background: var(--vm-blue);      color: #fff; }
+.vm-row__num--earned   { background: var(--vm-blue-soft); color: var(--vm-blue-deep); }
+.vm-row__num--negative { background: var(--vm-bad-soft);  color: var(--vm-bad); }
+
+.vm-row__title {
+  color: var(--vm-ink);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+.vm-row__url {
+  display: inline-block;
+  color: var(--vm-blue);
+  font-size: 12px;
+  margin-top: 2px;
+  text-decoration: none;
+}
+.vm-row__url:hover { text-decoration: underline; }
+.vm-row__snippet {
+  color: var(--vm-body);
+  font-size: 13px;
+  margin-top: 6px;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+/* Status pills */
+.vm-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: var(--vm-font);
+  white-space: nowrap;
+}
+.vm-pill--owned    { background: var(--vm-blue); color: #fff; }
+.vm-pill--earned   { background: var(--vm-blue-soft); color: var(--vm-blue-deep); }
+.vm-pill--neutral  { background: var(--vm-panel); color: var(--vm-muted); border-color: var(--vm-line); }
+.vm-pill--negative { background: var(--vm-bad-soft); color: var(--vm-bad); }
+
+/* Filter chips row */
+.vm-filters { display: flex; gap: 6px; }
+.vm-chip {
+  border: 1px solid var(--vm-line);
+  background: var(--vm-bg);
+  color: var(--vm-body);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-family: var(--vm-font);
+  cursor: pointer;
+  font-weight: 500;
+}
+.vm-chip:hover { border-color: var(--vm-line-strong); }
+.vm-chip--active {
+  border-color: var(--vm-ink);
+  background: var(--vm-ink);
+  color: #fff;
+}

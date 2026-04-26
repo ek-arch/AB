@@ -1,13 +1,10 @@
+# Streamlit native theme — drop into .streamlit/config.toml
+# Matches the design system: deep navy primary, neutral light surface.
+
 [theme]
 base = "light"
-primaryColor = "#15402F"
+primaryColor = "#1D4D7A"
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F4F4F4"
-textColor = "#0A0A0A"
+secondaryBackgroundColor = "#F7F8FA"
+textColor = "#0C1220"
 font = "sans serif"
-
-[server]
-headless = true
-
-[browser]
-gatherUsageStats = false
