@@ -668,6 +668,37 @@ try:
           // Also re-collapse on orientation change to mobile
           window.addEventListener('resize', tryCollapse);
         })();
+
+        // Nuke the 'Created by …' viewer badge that Streamlit Cloud injects.
+        // CSS targets it but Streamlit sometimes re-renders the badge late,
+        // so we periodically purge any element that links to a Streamlit profile.
+        (function(){
+          function killBadge() {
+            try {
+              var doc = window.parent.document;
+              var sel = [
+                '[data-testid="stAppViewerBadge"]',
+                '[class*="viewerBadge"]',
+                '[class*="ViewerBadge"]',
+                '[class*="viewerLink"]',
+                '[class*="ViewerLink"]',
+                '[class*="appCreatorAvatar"]',
+                'a[href*="streamlit.io"]',
+                'a[href*="streamlit.app"]',
+                'a[href*="share.streamlit.io"]',
+                'a[href*="/user/"]'
+              ].join(',');
+              doc.querySelectorAll(sel).forEach(function(el){ el.remove(); });
+            } catch(e){}
+          }
+          [200, 600, 1200, 2400, 4000, 6000].forEach(function(d){ setTimeout(killBadge, d); });
+          // Also keep killing whenever the parent DOM mutates (badge re-render)
+          try {
+            var pdoc = window.parent.document;
+            var mo = new MutationObserver(killBadge);
+            mo.observe(pdoc.body, { childList: true, subtree: true });
+          } catch(e){}
+        })();
         </script>
         """,
         height=0,

@@ -338,16 +338,34 @@ section[data-testid="stSidebar"] .brand-tag {
 header[data-testid="stHeader"] { background: transparent; height: 0; }
 footer { visibility: hidden; display: none !important; }
 
-/* Hide the "Made with Streamlit" badge and other branding */
+/* Hide the "Made with Streamlit" / "Created by …" viewer badge and ALL
+   variants of it. Streamlit Cloud rotates class names; cast a wide net. */
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
+[data-testid="stAppViewerBadge"],
+[data-testid="manage-app-button"],
+[class*="viewerBadge"],
+[class*="ViewerBadge"],
+[class*="viewerLink"],
+[class*="ViewerLink"],
+[class*="appCreatorAvatar"],
+[class*="profileLink"],
 .viewerBadge_container__1QSob,
 .styles_viewerBadge__1yB5_,
 .viewerBadge_link__1S137,
 .viewerBadge_text__1JaDK,
 a[href*="streamlit.io"],
-a[href*="share.streamlit.io"] {
+a[href*="streamlit.app"],
+a[href*="share.streamlit.io"],
+a[href*="/user/"] {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
 }
 
 /* Hide the Streamlit toolbar (Deploy, Share, etc.) on all viewports */
