@@ -1425,22 +1425,16 @@ with st.sidebar:
             st.rerun()
 
     # Navigation — switches main panel between views
-    if "current_view" not in st.session_state:
-        st.session_state.current_view = "Overview"
+    if "view_radio" not in st.session_state:
+        st.session_state.view_radio = "Overview"
 
     st.markdown('<div class="section-label">Navigation</div>', unsafe_allow_html=True)
-    new_view = st.radio(
+    st.radio(
         "View",
         ["Overview", "01 · Google search", "02 · LLM visibility", "03 · Action plan"],
-        index=["Overview", "01 · Google search", "02 · LLM visibility", "03 · Action plan"].index(
-            st.session_state.current_view
-        ),
         label_visibility="collapsed",
         key="view_radio",
     )
-    if new_view != st.session_state.current_view:
-        st.session_state.current_view = new_view
-        st.rerun()
 
     st.markdown(
         """
@@ -1683,15 +1677,15 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
     nav_cols = st.columns([1, 1, 1, 4])
     with nav_cols[0]:
         if st.button("→ Action plan", key="dash_to_actions", use_container_width=True):
-            st.session_state.current_view = "03 · Action plan"
+            st.session_state.view_radio = "03 · Action plan"
             st.rerun()
     with nav_cols[1]:
         if st.button("→ Google search", key="dash_to_google", use_container_width=True):
-            st.session_state.current_view = "01 · Google search"
+            st.session_state.view_radio = "01 · Google search"
             st.rerun()
     with nav_cols[2]:
         if st.button("→ LLM probes", key="dash_to_llm", use_container_width=True):
-            st.session_state.current_view = "02 · LLM visibility"
+            st.session_state.view_radio = "02 · LLM visibility"
             st.rerun()
 
 
@@ -1721,7 +1715,7 @@ def render_strategy():
     pplx_result = st.session_state.perplexity_result
     openai_result = st.session_state.openai_result
 
-    view = st.session_state.get("current_view", "Overview")
+    view = st.session_state.get("view_radio", "Overview")
 
     # ============================================================
     # OVERVIEW VIEW — dashboard only, then return
