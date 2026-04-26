@@ -2229,11 +2229,7 @@ def render_step3(serp_result, pplx_result, openai_result, config):
         else:
             items.sort(key=lambda i: (status_order[i["status"]], i["priority"], i.get("effort", 3)))
 
-        for it in items:
-            total_counts[it["status"]] += 1
-            render_task(it, cat_id, it["_custom"])
-
-        # + Add task form
+        # + Add task form (rendered ABOVE the task list per user preference)
         with st.expander(f"+ Add task to '{category['title']}'"):
             with st.form(key=f"add_form_{cat_id}", clear_on_submit=True):
                 new_label = st.text_input("Task name *", key=f"new_label_{cat_id}")
@@ -2265,6 +2261,10 @@ def render_step3(serp_result, pplx_result, openai_result, config):
                     })
                     save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
                     st.rerun()
+
+        for it in items:
+            total_counts[it["status"]] += 1
+            render_task(it, cat_id, it["_custom"])
 
     st.markdown(
         f'<div class="section-title">Plan summary <small>{total_counts["todo"]} todo · {total_counts["in progress"]} doing · {total_counts["done"]} done</small></div>',
