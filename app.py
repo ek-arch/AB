@@ -729,9 +729,9 @@ DEFAULT_EARNED = [
 PRIMARY_TASK = {
     "id": "core_g",
     "group": "_primary",
-    "label": "andrii bruiaka",
+    "label": "Andrii Bruiaka",
     "engine": "google",
-    "query": "andrii bruiaka",
+    "query": "Andrii Bruiaka",
 }
 
 TASKS = [PRIMARY_TASK]
@@ -2064,7 +2064,7 @@ def render_strategy():
     st.markdown(
         """
         <div class="query-display">
-          <div class="query-text">andrii bruiaka</div>
+          <div class="query-text">Andrii Bruiaka</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -2127,7 +2127,7 @@ def render_step1(primary_task, serp_result, config):
         '<a id="step-1-google"></a>'
         '<div class="step-block first">'
         '<div class="step-header"><div class="step-num">01</div><div class="step-title">Google search</div></div>'
-        '<div class="step-subtitle">What do pages 1-3 (top 30) look like for "andrii bruiaka"? Each row is a SERP slot you either own, earn, or need to displace. Page 1 is what almost everyone sees; pages 2-3 are still in reach for someone digging.</div>'
+        '<div class="step-subtitle">What do pages 1-3 (top 30) look like for "Andrii Bruiaka"? Each row is a SERP slot you either own, earn, or need to displace. Page 1 is what almost everyone sees; pages 2-3 are still in reach for someone digging.</div>'
         '</div>',
         unsafe_allow_html=True,
     )
