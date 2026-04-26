@@ -1463,6 +1463,25 @@ with st.sidebar:
 EFFORT_LABELS = {1: "5–30 min", 2: "<2 h", 3: "½ day", 4: "multi-day", 5: "ongoing/weeks"}
 
 
+def _resolve_status(task, saved, auto_done):
+    """Resolve the effective status for a task.
+
+    Precedence:
+    1) If user has truly interacted (proof URL or notes set) → respect saved status.
+    2) Else if task defines default_status → use it (overrides any stale saved 'todo').
+    3) Else if auto_done → 'done'.
+    4) Else fall back to saved status (for legacy interactions without url/notes), then 'todo'.
+    """
+    has_interaction = bool(saved.get("url")) or bool(saved.get("notes"))
+    if has_interaction:
+        return saved.get("status", "todo")
+    if task.get("default_status"):
+        return task["default_status"]
+    if auto_done:
+        return "done"
+    return saved.get("status", "todo")
+
+
 def render_dashboard(serp_result, pplx_result, openai_result, config):
     """Top-of-page dashboard: 'Now' KPIs + 'Activity' task summary."""
 
@@ -1523,8 +1542,7 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
                 continue
             saved = states.get(t["label"], {})
             auto_done = auto_check_task(t, serp_urls, citation_urls)
-            fallback = t.get("default_status") or ("done" if auto_done else "todo")
-            status = saved.get("status", fallback)
+            status = _resolve_status(t, saved, auto_done)
             counts[status] += 1
             if status != "done":
                 quick_wins.append(
@@ -1532,7 +1550,7 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
                 )
         for c in custom.get(cat["id"], []):
             saved = states.get(c["label"], {})
-            status = saved.get("status", c.get("default_status", "todo"))
+            status = _resolve_status(c, saved, False)
             counts[status] += 1
             if status != "done":
                 quick_wins.append(
@@ -2190,11 +2208,9 @@ def render_step3(serp_result, pplx_result, openai_result, config):
                 continue
             saved = states.get(t["label"], {})
             auto_done = auto_check_task(t, serp_urls, citation_urls)
-            # Default precedence: explicit default_status > auto-detected > "todo"
-            fallback = t.get("default_status") or ("done" if auto_done else "todo")
             items.append({
                 **t,
-                "status": saved.get("status", fallback),
+                "status": _resolve_status(t, saved, auto_done),
                 "url": saved.get("url", ""),
                 "notes": saved.get("notes", ""),
                 "auto_present": auto_done,
@@ -2204,7 +2220,7 @@ def render_step3(serp_result, pplx_result, openai_result, config):
             saved = states.get(c["label"], {})
             items.append({
                 **c,
-                "status": saved.get("status", c.get("default_status", "todo")),
+                "status": _resolve_status(c, saved, False),
                 "url": saved.get("url", ""),
                 "notes": saved.get("notes", ""),
                 "auto_present": False,
