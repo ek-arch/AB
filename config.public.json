@@ -1,4 +1,58 @@
 {
-  "_test": true,
-  "ts": "2026-04-26T17:35:34.804384"
+  "search_query": "Andrii Bruiaka\nandriibruiaka\nAndrew Bruiaka\n\"Andrii Bruiaka\" Onicore\nAndrii Bruiaka fintech",
+  "search_gl": "",
+  "search_hl": "",
+  "owned_domains": [
+    "bruiaka.com",
+    "andrewbruiaka.substack.com",
+    "andrewbruiaka",
+    "andriibruiaka",
+    "andrii-bruiaka",
+    "onicore.io",
+    "nonbank.io"
+  ],
+  "earned_domains": [
+    "finextra.com",
+    "thefintechtimes.com",
+    "sifted.eu",
+    "bankingdive.com",
+    "fintechfilter.com",
+    "hackernoon.com",
+    "medium.com",
+    "dev.to",
+    "substack.com",
+    "coindesk.com",
+    "cointelegraph.com",
+    "decrypt.co",
+    "theblock.co",
+    "crunchbase.com",
+    "producthunt.com",
+    "f6s.com",
+    "clarity.fm",
+    "stackoverflow.com",
+    "hashnode.com",
+    "allmylinks.com",
+    "coinmarketcap.com",
+    "d-themes.com",
+    "linkedin.com"
+  ],
+  "negative_domains": [
+    "fintelegram.com"
+  ],
+  "negatives": [],
+  "irrelevant": [
+    "https://www.linkedin.com/in/andrii-buriakov-7a3281235|Andrii Buriakov - EVERGREEN DIGITAL AGENCY",
+    "https://ganacoop.co/index.php/component/k2/item/3-importance-of-innovation-and-professionalism?limit=10&start=708290|Importance of innovation and professionalism! - Ganacoop",
+    "https://justpaste.it/a2xzh/pdf|Understanding and verifying ownership is essential in the ...",
+    "https://www.quora.com/shouldnt-trumps-new-financial-fintech-services-company-truthfi-come-with-a-warning-label-isnt-a-president-having-his-own-investment-company-another-step-over-the-line|Shouldn't Trump's new financial fintech services company ...",
+    "https://orcid.org/0000-0001-5569-2700|ORCID",
+    "https://sherrypoole.webflow.io/|SherryPoole",
+    "https://www.linkedin.com/in/andrew-brubaker-30b2a927a|Andrew Brubaker - illycaff\u00e8",
+    "https://ph.linkedin.com/in/andrew-brubaker-560b3692|Andrew Brubaker",
+    "https://blogs.adb.org/author/andrew-brubaker|Andrew Brubaker - ADB Blog - Asian Development Bank",
+    "https://www.linkedin.com/in/andrew-bruyako-ab7bb727|Andrew Bruyako - AB Plumbing And Rooter LLC",
+    "https://www.facebook.com/heretosing/posts/were-thrilled-to-officially-welcome-our-new-music-director-andrew-brubaker-who-w/1876829589824520/|Andrew is a singer, pianist, conductor and music educator ...",
+    "https://goredbirds.com/staff-directory/andrew-brubaker/308|Andrew Brubaker - Sr. Associate Athletic Trainer (FB)",
+    "https://www.linkedin.com/in/andrew-bruyako-b4294b34|Andrew Bruyako - AB Plumbing & Rooter, LLC"
+  ]
 }
