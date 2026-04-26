@@ -767,11 +767,59 @@ def load_tasks():
     return {"states": data if isinstance(data, dict) else {}, "hidden": [], "custom": {}}
 
 
+def _github_token():
+    """Read GitHub PAT from Streamlit secrets. Returns None if not configured."""
+    try:
+        return st.secrets.get("github_token") or st.secrets.get("GITHUB_TOKEN")
+    except Exception:
+        return None
+
+
+def push_tasks_to_github(doc, repo="ek-arch/AB", path="tasks.json", branch="main"):
+    """Best-effort: commit tasks.json to GitHub via the contents API.
+    Silently no-ops if no token is configured (e.g. local dev).
+    Returns (ok: bool, message: str) so the caller can show feedback.
+    """
+    import base64
+    token = _github_token()
+    if not token:
+        return False, "no token (saved locally only)"
+    try:
+        api = f"https://api.github.com/repos/{repo}/contents/{path}"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+        # Get current sha (required for updates; omit for first create)
+        get = requests.get(api, headers=headers, params={"ref": branch}, timeout=10)
+        sha = get.json().get("sha") if get.status_code == 200 else None
+
+        body = json.dumps(doc, indent=2)
+        payload = {
+            "message": f"app: update tasks.json ({datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')})",
+            "content": base64.b64encode(body.encode("utf-8")).decode("ascii"),
+            "branch": branch,
+        }
+        if sha:
+            payload["sha"] = sha
+
+        put = requests.put(api, headers=headers, json=payload, timeout=15)
+        if put.status_code in (200, 201):
+            return True, "synced to github"
+        return False, f"github HTTP {put.status_code}: {put.text[:120]}"
+    except Exception as e:
+        return False, f"github error: {e}"
+
+
 def save_tasks(doc):
+    # Always write locally first (so the running session sees the change)
     try:
         TASKS_FILE.write_text(json.dumps(doc, indent=2))
     except Exception:
         pass
+    # Then attempt to mirror to GitHub for cross-deploy persistence
+    push_tasks_to_github(doc)
 
 
 def save_snapshot(task_id, data):
