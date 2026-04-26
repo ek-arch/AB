@@ -1479,7 +1479,7 @@ with st.sidebar:
     st.markdown('<div class="section-label">Navigation</div>', unsafe_allow_html=True)
     st.radio(
         "View",
-        ["Overview", "01 · Google search", "02 · LLM visibility", "03 · Action plan"],
+        ["Overview", "01 · Google search", "02 · LLM visibility", "03 · Action plan", "04 · Content plan"],
         label_visibility="collapsed",
         key="view_radio",
     )
@@ -1499,6 +1499,202 @@ with st.sidebar:
         """,
         unsafe_allow_html=True,
     )
+
+
+# ============================================================
+# CONTENT PLAN — concrete editorial calendar
+# Each item = an article/podcast/post with title, outlet, keywords, thesis.
+# Status persists in tasks.json under the same `states` dict keyed by title.
+# ============================================================
+CONTENT_PILLARS = [
+    {"id": "crypto-ux",  "title": "Crypto usability, wallets & ownership"},
+    {"id": "infra",      "title": "Fintech infrastructure & APIs"},
+    {"id": "compliance", "title": "Compliance, RegTech & anti-fraud"},
+    {"id": "ai",         "title": "Fintech + AI"},
+    {"id": "banking",    "title": "Digital banking & cross-border"},
+    {"id": "investment", "title": "Fintech investment & ecosystems"},
+    {"id": "tech",       "title": "Engineering & build stories"},
+]
+
+CONTENT_PLAN = [
+    # ============ Crypto UX (already publishing here) ============
+    {
+        "title": "From seed phrases to Face ID: the human side of crypto UX",
+        "pillar": "crypto-ux",
+        "outlets": ["Substack", "Finextra", "TFT", "Medium", "LinkedIn"],
+        "keywords": ["passkeys", "crypto UX", "self-custody", "Face ID", "WebAuthn"],
+        "thesis": "Passwords are the weakest link in fintech. Passkeys bridge UX + security: biometric login with cryptographic safety. The future of crypto onboarding looks like Apple Pay.",
+        "default_status": "done",
+        "default_url": "https://open.substack.com/pub/andrewbruiaka/p/from-seed-phrases-to-face-id",
+    },
+    {
+        "title": "Why 80% of crypto users still avoid self-custody — and how to fix it",
+        "pillar": "crypto-ux",
+        "outlets": ["CoinMarketCap", "LinkedIn", "Substack"],
+        "keywords": ["self-custody", "non-custodial wallets", "exchange dependence", "Chainalysis 2024"],
+        "thesis": "Most crypto sits on exchanges, not wallets. Better UX, simple recovery, and passkey tech can close the gap between security and usability. Freedom is meaningless if it's too hard to use.",
+        "default_status": "done",
+        "default_url": "https://andrewbruiaka.substack.com/p/why-80-of-crypto-users-still-avoid",
+    },
+    {
+        "title": "What 2025 taught us about crypto adoption",
+        "pillar": "crypto-ux",
+        "outlets": ["Substack", "LinkedIn"],
+        "keywords": ["crypto adoption", "user retention", "regulation", "Statista 1B forecast"],
+        "thesis": "500M+ crypto users now, but most stick to exchanges. UX and trust are the new growth engines. Markets with stronger compliance saw the highest retention. Forecast: 1B users by 2027 — but only if UX keeps improving.",
+        "default_status": "done",
+        "default_url": "https://andrewbruiaka.substack.com/p/what-2025-taught-me-about-crypto",
+    },
+    {
+        "title": "The wallet is becoming the new home screen of finance",
+        "pillar": "crypto-ux",
+        "outlets": ["Finextra Member Blog", "TFT", "Stack Overflow blog", "fintechfilter.com"],
+        "keywords": ["super-apps", "Revolut", "PayPal", "Cash App", "Gen Z finance", "mobile wallets"],
+        "thesis": "Most fintech users open a wallet app more often than a bank's website. Super-apps blend payments + crypto + credit. For the next generation, the wallet IS the bank — 68% of Gen Z manage finances through mobile wallets (Statista 2025).",
+        "default_status": "in progress",
+    },
+    {
+        "title": "Fintech and Web3 are merging into one ecosystem",
+        "pillar": "crypto-ux",
+        "outlets": ["dev.to", "LinkedIn", "Medium"],
+        "keywords": ["fintech web3 convergence", "stablecoins", "digital identity", "unified finance"],
+        "thesis": "The border between banks, wallets, and crypto is fading. A single app could soon manage fiat, tokens, stablecoins, and digital IDs. It isn't crypto vs. banks — it's unifying the experience around users.",
+        "default_status": "done",
+        "default_url": "https://dev.to/andriibruiaka/fintech-and-web3-are-merging-into-one-ecosystem-2aml",
+    },
+    {
+        "title": "Crypto cashback isn't a gimmick: rebuilding loyalty programs on-chain",
+        "pillar": "crypto-ux",
+        "outlets": ["Decrypt", "Cointelegraph", "Finextra", "Substack"],
+        "keywords": ["BTC cashback", "loyalty programs", "rewards on-chain", "crypto cards", "Kolo"],
+        "thesis": "Visa/Mastercard cashback hasn't moved in 20 years. Crypto cashback is the first real reset: programmatic rewards, instant settlement, denominated in an appreciating asset. Kolo case study: 50K active wallets, $250M tx volume in 7 months.",
+        "default_status": "todo",
+    },
+
+    # ============ Fintech infrastructure & APIs ============
+    {
+        "title": "How embedded finance reshapes how money moves (B2B2C)",
+        "pillar": "infra",
+        "outlets": ["Finextra", "TFT", "fintechfilter.com"],
+        "keywords": ["embedded finance", "B2B2C", "API-first banking", "NonBank.io"],
+        "thesis": "Embedded finance drives B2B transformation. Any business can now offer financial features through APIs. By 2030 most fintech revenue will come from financialized non-bank platforms, not banks. NonBank.io shows the operating model.",
+        "default_status": "in progress",
+    },
+    {
+        "title": "Will payment APIs replace traditional banks?",
+        "pillar": "infra",
+        "outlets": ["Finextra", "Sifted", "dev.to"],
+        "keywords": ["payment APIs", "real-time payments", "legacy banking rails", "modern infrastructure"],
+        "thesis": "Legacy bank rails are too slow for a real-time economy. Speed and transparency are the new standards. Modern APIs enable instant, borderless payments. Banks become rails, not relationships.",
+        "default_status": "todo",
+    },
+    {
+        "title": "Building trust in open banking systems",
+        "pillar": "infra",
+        "outlets": ["Finextra", "TFT", "Medium", "LinkedIn"],
+        "keywords": ["open banking", "API-first", "data trust", "auditability", "OniCore"],
+        "thesis": "Open banking only works when users trust data connections. API-first design creates transparency and control. Security and auditability built into the system, not bolted on. OniCore proves trust can be engineered.",
+        "default_status": "todo",
+    },
+
+    # ============ Compliance / RegTech ============
+    {
+        "title": "Smart compliance as a fintech's secret weapon",
+        "pillar": "compliance",
+        "outlets": ["Finextra", "Banking Dive", "fintechfilter.com"],
+        "keywords": ["RegTech", "behavioural risk models", "proactive compliance", "AML automation"],
+        "thesis": "Behavioural models allow proactive risk detection instead of reactive screening. Compliance can be a value driver, not just a cost. Old compliance tools slow down fintech growth — modern ones unlock it.",
+        "default_status": "in progress",
+    },
+    {
+        "title": "Can data outsmart fraud? The new financial security playbook",
+        "pillar": "compliance",
+        "outlets": ["Finextra", "TFT", "Banking Dive"],
+        "keywords": ["AI fraud detection", "real-time risk", "ML in compliance", "risk engines"],
+        "thesis": "Fraud detection must evolve with data, not rules. AI predicts fraud before it happens. Risk engines integrated into APIs keep systems safer. Real-time analytics change how fintech fights crime.",
+        "default_status": "todo",
+    },
+
+    # ============ Fintech + AI ============
+    {
+        "title": "Predictive fintech platforms will think ahead of you",
+        "pillar": "ai",
+        "outlets": ["Sifted", "TFT", "fintechfilter.com"],
+        "keywords": ["predictive analytics", "proactive UX", "churn reduction", "AI in fintech"],
+        "thesis": "Predictive analytics anticipate user needs. Fintech must move from react to proact. Data helps reduce churn and increase customer LTV. The product feels like it's reading your mind because it's reading your patterns.",
+        "default_status": "todo",
+    },
+
+    # ============ Banking / Wallets / Cross-border ============
+    {
+        "title": "The rise of non-banks: API-first beats bureaucracy",
+        "pillar": "banking",
+        "outlets": ["Finextra", "Sifted"],
+        "keywords": ["non-banks", "challenger banks", "API-first", "NonBank.io"],
+        "thesis": "Banks are losing ground to API-first fintech platforms. NonBank.io shows how technology beats bureaucracy. The bank licence isn't the moat anymore — the operating model is.",
+        "default_status": "in progress",
+    },
+    {
+        "title": "Re-inventing digital wallets for Web3",
+        "pillar": "banking",
+        "outlets": ["Finextra", "TFT"],
+        "keywords": ["Web3 wallets", "multi-currency", "non-custodial UX", "fiat-crypto bridge"],
+        "thesis": "Web3 wallets give users full control and ownership. Multi-currency design solves cross-border friction. Crypto and fiat can coexist in one system. UX and security remain the main challenges.",
+        "default_status": "todo",
+    },
+    {
+        "title": "Why cross-border payments still don't work",
+        "pillar": "banking",
+        "outlets": ["Finextra", "Sifted"],
+        "keywords": ["SWIFT alternative", "stablecoin payments", "remittances", "cross-border"],
+        "thesis": "Networks like SWIFT are too slow and costly. Fintech can rebuild payments using APIs and stablecoins. NonBank.io offers a new global model — programmable money rails, not letter-of-credit relationships.",
+        "default_status": "todo",
+    },
+
+    # ============ Investment & ecosystems ============
+    {
+        "title": "The smart money is moving into fintech infrastructure",
+        "pillar": "investment",
+        "outlets": ["Sifted", "TFT"],
+        "keywords": ["fintech VC", "B2B infra", "platform investing", "infrastructure moat"],
+        "thesis": "The future of fintech investment is in B2B infrastructure. Platforms outlast apps and hype cycles. Product-led growth creates lasting value. Infrastructure is the new competitive moat.",
+        "default_status": "todo",
+    },
+    {
+        "title": "Why fintech needs builders, not speculators",
+        "pillar": "investment",
+        "outlets": ["Sifted", "HackerNoon"],
+        "keywords": ["fintech founders", "long-term R&D", "anti-hype", "engineering culture"],
+        "thesis": "The industry has been overrun by hype investors. True value comes from founders who build, not flip. Innovation depends on long-term R&D focus.",
+        "default_status": "in progress",
+    },
+    {
+        "title": "From code to capital: VCs should think like engineers",
+        "pillar": "investment",
+        "outlets": ["HackerNoon", "Sifted"],
+        "keywords": ["technical founders", "engineering-led VC", "infrastructure investing"],
+        "thesis": "Investing in software is investing in infrastructure. Tech-driven founders manage capital smarter. VCs must think like engineers, not bankers. 'Builders funding builders' is the next wave.",
+        "default_status": "todo",
+    },
+
+    # ============ Tech / Engineering stories ============
+    {
+        "title": "What we learned building a scalable fintech platform from scratch",
+        "pillar": "tech",
+        "outlets": ["HackerNoon", "Medium", "Substack"],
+        "keywords": ["fintech architecture", "scaling", "security at scale", "OniCore engineering"],
+        "thesis": "Scaling fintech is more about systems than size. Security must evolve with scale. Good architecture builds user trust before any UI does.",
+        "default_status": "in progress",
+    },
+    {
+        "title": "From prototype to platform: building payment software that lasts",
+        "pillar": "tech",
+        "outlets": ["HackerNoon", "Medium", "Substack"],
+        "keywords": ["MVP to platform", "long-term design", "product engineering", "developer culture"],
+        "thesis": "Many fintech MVPs fail because they don't scale. Long-term design beats short-term speed. NonBank.io shows how to build for growth. Developer culture defines product success.",
+        "default_status": "todo",
+    },
+]
 
 
 # ============================================================
@@ -1788,7 +1984,10 @@ def render_strategy():
     if view == "02 · LLM visibility":
         render_step2(pplx_result, openai_result, has_pplx, st.session_state.config)
         return
-    # Default: action plan
+    if view == "04 · Content plan":
+        render_content_plan(st.session_state.config)
+        return
+    # Default: action plan (view "03 · Action plan")
     render_step3(serp_result, pplx_result, openai_result, st.session_state.config)
 
 
@@ -2079,6 +2278,179 @@ def render_step2(pplx_result, openai_result, has_pplx, config):
                     st.markdown(f"{i}. [{url}]({url}){tag}")
     elif openai_result and "error" in openai_result:
         st.error(f"ChatGPT: {openai_result['error']}")
+
+
+def render_content_plan(config):
+    """Step 04 — Editorial / content calendar."""
+    st.markdown(
+        '<a id="step-4-content"></a>'
+        '<div class="step-block first">'
+        '<div class="step-header"><div class="step-num">04</div><div class="step-title">Content plan</div></div>'
+        '<div class="step-subtitle">Editorial pipeline grouped by brand pillar. Each item is a concrete piece — title, target outlets, SEO keywords, and a 1-line thesis. Mark status, paste the published URL when it lands.</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    doc = load_tasks()
+    states = doc["states"]
+    hidden = set(doc["hidden"])
+    custom = doc["custom"]
+    changed = False
+
+    status_options = ["todo", "in progress", "done"]
+    status_color = {"todo": "var(--vm-muted)", "in progress": "#8c4500", "done": "var(--vm-green)"}
+    status_order = {"todo": 0, "in progress": 1, "done": 2}
+
+    pillar_options = ["All pillars"] + [p["title"] for p in CONTENT_PILLARS]
+    selected_pillar = st.radio(
+        "Filter by pillar",
+        pillar_options,
+        horizontal=True,
+        key="content_pillar_filter",
+        label_visibility="collapsed",
+    )
+
+    sort_choice = st.radio(
+        "Order by",
+        ["Status (todo first)", "Pillar"],
+        horizontal=True,
+        key="content_sort_mode",
+        label_visibility="collapsed",
+    )
+
+    counts = {"todo": 0, "in progress": 0, "done": 0}
+
+    for pillar in CONTENT_PILLARS:
+        if selected_pillar != "All pillars" and selected_pillar != pillar["title"]:
+            continue
+
+        items = [c for c in CONTENT_PLAN if c["pillar"] == pillar["id"] and c["title"] not in hidden]
+        custom_pillar = custom.get(f"content::{pillar['id']}", [])
+        items.extend([{**c, "_custom": True} for c in custom_pillar])
+
+        if not items:
+            continue
+
+        # Resolve status for each item
+        for it in items:
+            saved = states.get(it["title"], {})
+            it["_status"] = _resolve_status(it, saved, False)
+            it["_url"] = saved.get("url", "") or it.get("default_url", "")
+            it["_notes"] = saved.get("notes", "")
+            counts[it["_status"]] += 1
+
+        if sort_choice.startswith("Status"):
+            items.sort(key=lambda i: status_order[i["_status"]])
+
+        # Render pillar header
+        st.markdown(
+            f'<div class="category-header"><div class="category-title">{escape_html(pillar["title"])}</div></div>',
+            unsafe_allow_html=True,
+        )
+
+        # Add-content form (above the list)
+        with st.expander(f"+ Add piece to '{pillar['title']}'"):
+            with st.form(key=f"add_content_{pillar['id']}", clear_on_submit=True):
+                new_title = st.text_input("Title *", key=f"ct_title_{pillar['id']}")
+                new_outlets = st.text_input("Target outlets (comma-separated)", key=f"ct_outlets_{pillar['id']}")
+                new_keywords = st.text_input("Keywords (comma-separated)", key=f"ct_kw_{pillar['id']}")
+                new_thesis = st.text_area("Thesis (1-2 lines)", key=f"ct_thesis_{pillar['id']}", height=70)
+                if st.form_submit_button("Add piece"):
+                    if new_title.strip():
+                        custom.setdefault(f"content::{pillar['id']}", []).append({
+                            "title": new_title.strip(),
+                            "pillar": pillar["id"],
+                            "outlets": [o.strip() for o in new_outlets.split(",") if o.strip()],
+                            "keywords": [k.strip() for k in new_keywords.split(",") if k.strip()],
+                            "thesis": new_thesis.strip(),
+                        })
+                        save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
+                        st.rerun()
+
+        for it in items:
+            with st.container(border=True):
+                head = st.columns([6, 2, 1])
+                with head[0]:
+                    st.markdown(f"**{escape_html(it['title'])}**")
+                with head[1]:
+                    new_status = st.selectbox(
+                        "status",
+                        status_options,
+                        index=status_options.index(it["_status"]),
+                        key=f"cstatus_{it['title']}",
+                        label_visibility="collapsed",
+                    )
+                with head[2]:
+                    if st.button("✕", key=f"cdel_{it['title']}", help="Hide this piece"):
+                        if it.get("_custom"):
+                            custom[f"content::{pillar['id']}"] = [
+                                c for c in custom.get(f"content::{pillar['id']}", []) if c["title"] != it["title"]
+                            ]
+                        else:
+                            hidden.add(it["title"])
+                        states.pop(it["title"], None)
+                        save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
+                        st.rerun()
+
+                outlets = " · ".join(it.get("outlets", []))
+                if outlets:
+                    st.markdown(
+                        f'<div style="font-size:12px; color:var(--vm-muted); margin-top:2px;">↳ Outlets: <span style="color:var(--vm-ink);">{escape_html(outlets)}</span></div>',
+                        unsafe_allow_html=True,
+                    )
+                kws = ", ".join(it.get("keywords", []))
+                if kws:
+                    st.markdown(
+                        f'<div style="font-size:12px; color:var(--vm-muted); margin-top:2px;">↳ Keywords: <span style="color:var(--vm-ink);">{escape_html(kws)}</span></div>',
+                        unsafe_allow_html=True,
+                    )
+                if it.get("thesis"):
+                    st.caption(f"**Thesis:** {it['thesis']}")
+
+                link_cols = st.columns([3, 2])
+                with link_cols[0]:
+                    new_url = st.text_input(
+                        "Published URL",
+                        value=it["_url"],
+                        placeholder="https://... (paste once published)",
+                        key=f"curl_{it['title']}",
+                        label_visibility="collapsed",
+                    )
+                with link_cols[1]:
+                    new_notes = st.text_input(
+                        "Notes",
+                        value=it["_notes"],
+                        placeholder="notes",
+                        key=f"cnotes_{it['title']}",
+                        label_visibility="collapsed",
+                    )
+
+                if (
+                    new_status != it["_status"]
+                    or new_url != it["_url"]
+                    or new_notes != it["_notes"]
+                ):
+                    states[it["title"]] = {
+                        "status": new_status,
+                        "url": new_url,
+                        "notes": new_notes,
+                    }
+                    changed = True
+
+                if new_url and new_status == "done":
+                    st.markdown(
+                        f'<div style="font-size:13px;"><a href="{escape_html(new_url)}" target="_blank">↗ {escape_html(new_url)}</a></div>',
+                        unsafe_allow_html=True,
+                    )
+
+    st.markdown(
+        f'<div class="section-title">Content pipeline <small>{counts["todo"]} todo · {counts["in progress"]} drafting · {counts["done"]} published</small></div>',
+        unsafe_allow_html=True,
+    )
+
+    if changed:
+        save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
+        st.rerun()
 
 
 def render_step3(serp_result, pplx_result, openai_result, config):
