@@ -746,7 +746,7 @@ def load_config():
         "api_key": "",
         "perplexity_key": "",
         "openai_key": "",
-        "search_query": "Andrii Bruiaka\nandriibruiaka\nAndrew Bruiaka\n\"Andrii Bruiaka\" Onicore\nAndrii Bruiaka fintech",
+        "search_query": "Andrii Bruiaka",
         "search_gl": "",  # country code (us, pt, gb, ...) — empty = Google decides
         "search_hl": "",  # interface language (en, pt, ...) — empty = Google decides
         "owned_domains": DEFAULT_OWNED.copy(),
@@ -2262,17 +2262,34 @@ def render_step1(primary_task, serp_result, config):
     runtime_gl = (config.get("search_gl") or "").strip() or None
     runtime_hl = (config.get("search_hl") or "").strip() or None
     locale_hint = f" · {runtime_gl}/{runtime_hl}" if runtime_gl or runtime_hl else " · Google-decided locale (browser-like)"
-    st.caption(f"{len(queries)} query variant{'s' if len(queries) != 1 else ''}{locale_hint} — edit in Settings.")
-    if st.button(f"▶ Refresh Google search ({len(queries)} queries · merged)", use_container_width=True, type="primary"):
+    if len(queries) == 1:
+        st.caption(f"Query: `{queries[0]}`{locale_hint} — edit in Settings.")
+        button_label = "▶ Refresh Google search"
+    else:
+        st.caption(f"{len(queries)} query variants{locale_hint} — edit in Settings.")
+        button_label = f"▶ Refresh Google search ({len(queries)} queries · merged)"
+    if st.button(button_label, use_container_width=True, type="primary"):
         try:
             st.session_state.task_status[primary_task["id"]] = "running"
-            data = call_serpapi_multiquery(
-                queries,
-                primary_task["engine"],
-                st.session_state.config["api_key"],
-                gl=runtime_gl,
-                hl=runtime_hl,
-            )
+            if len(queries) == 1:
+                # Single query: use paginated multipage so we still try to
+                # fetch deeper pages for that one query.
+                data = call_serpapi_multipage(
+                    queries[0],
+                    primary_task["engine"],
+                    st.session_state.config["api_key"],
+                    pages=3,
+                    gl=runtime_gl,
+                    hl=runtime_hl,
+                )
+            else:
+                data = call_serpapi_multiquery(
+                    queries,
+                    primary_task["engine"],
+                    st.session_state.config["api_key"],
+                    gl=runtime_gl,
+                    hl=runtime_hl,
+                )
             st.session_state.results[primary_task["id"]] = data
             st.session_state.task_status[primary_task["id"]] = "ok"
             save_snapshot(primary_task["id"], data)
