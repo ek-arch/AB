@@ -2720,10 +2720,14 @@ def render_content_plan(config):
         for idx, it in enumerate(items):
             row_key = f"{pillar['id']}_{idx}_{it['title'][:40]}"
             with st.container(border=True):
-                head = st.columns([6, 2, 1])
-                with head[0]:
-                    st.markdown(f"**{escape_html(it['title'])}**")
-                with head[1]:
+                # Title as headline
+                st.markdown(
+                    f'<div style="font-size:15px; font-weight:600; color:var(--vm-ink); line-height:1.35; margin-bottom:6px;">{escape_html(it["title"])}</div>',
+                    unsafe_allow_html=True,
+                )
+                # Status + delete inline
+                ctrl_cols = st.columns([3, 1], vertical_alignment="center")
+                with ctrl_cols[0]:
                     new_status = st.selectbox(
                         "status",
                         status_options,
@@ -2731,8 +2735,8 @@ def render_content_plan(config):
                         key=f"cstatus_{row_key}",
                         label_visibility="collapsed",
                     )
-                with head[2]:
-                    if st.button("✕", key=f"cdel_{row_key}", help="Hide this piece"):
+                with ctrl_cols[1]:
+                    if st.button("✕", key=f"cdel_{row_key}", help="Hide this piece", use_container_width=True):
                         if it.get("_custom"):
                             custom[f"content::{pillar['id']}"] = [
                                 c for c in custom.get(f"content::{pillar['id']}", []) if c["title"] != it["title"]
@@ -2746,7 +2750,7 @@ def render_content_plan(config):
                 outlets = " · ".join(it.get("outlets", []))
                 if outlets:
                     st.markdown(
-                        f'<div style="font-size:12px; color:var(--vm-muted); margin-top:2px;">↳ Outlets: <span style="color:var(--vm-ink);">{escape_html(outlets)}</span></div>',
+                        f'<div style="font-size:12px; color:var(--vm-muted); margin-top:8px;">↳ Outlets: <span style="color:var(--vm-ink);">{escape_html(outlets)}</span></div>',
                         unsafe_allow_html=True,
                     )
                 kws = ", ".join(it.get("keywords", []))
@@ -2758,23 +2762,20 @@ def render_content_plan(config):
                 if it.get("thesis"):
                     st.caption(f"**Thesis:** {it['thesis']}")
 
-                link_cols = st.columns([3, 2])
-                with link_cols[0]:
-                    new_url = st.text_input(
-                        "Published URL",
-                        value=it["_url"],
-                        placeholder="https://... (paste once published)",
-                        key=f"curl_{row_key}",
-                        label_visibility="collapsed",
-                    )
-                with link_cols[1]:
-                    new_notes = st.text_input(
-                        "Notes",
-                        value=it["_notes"],
-                        placeholder="notes",
-                        key=f"cnotes_{row_key}",
-                        label_visibility="collapsed",
-                    )
+                new_url = st.text_input(
+                    "Published URL",
+                    value=it["_url"],
+                    placeholder="https://... (paste once published)",
+                    key=f"curl_{row_key}",
+                    label_visibility="collapsed",
+                )
+                new_notes = st.text_input(
+                    "Notes",
+                    value=it["_notes"],
+                    placeholder="notes",
+                    key=f"cnotes_{row_key}",
+                    label_visibility="collapsed",
+                )
 
                 if (
                     new_status != it["_status"]
@@ -2870,19 +2871,22 @@ def render_step3(serp_result, pplx_result, openai_result, config):
         nonlocal changed
         label = it["label"]
         eff = it.get("effort", 3)
-        # Compose a unique row-key prefix so duplicate labels never collide
+        prio = it["priority"]
         row_key = f"{cat_id}_{idx}_{label[:60]}"
         with st.container(border=True):
-            head_cols = st.columns([1, 4, 2, 1])
-            with head_cols[0]:
-                st.markdown(
-                    f'<div style="font-size:13px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:6px;">{priority_label[it["priority"]]}</div>'
-                    f'<div class="effort-row" style="font-size:11px; color:var(--muted); letter-spacing:0.08em; padding-top:2px;" title="Effort: {effort_label.get(eff, "?")}"><span class="effort-dots">{effort_dot.get(eff, "●●●")}</span> {effort_label.get(eff, "")}</div>',
-                    unsafe_allow_html=True,
-                )
-            with head_cols[1]:
-                st.markdown(f"**{escape_html(label)}**")
-            with head_cols[2]:
+            # Headline: bold task name; meta line below with priority + effort inline
+            st.markdown(
+                f'<div style="font-size:15px; font-weight:600; color:var(--vm-ink); line-height:1.35; margin-bottom:4px;">{escape_html(label)}</div>'
+                f'<div style="display:flex; gap:10px; align-items:center; font-size:11px; color:var(--vm-muted); margin-bottom:8px;">'
+                f'  <span style="color:{priority_color[prio]}; font-weight:600; letter-spacing:0.05em;">{priority_label[prio]}</span>'
+                f'  <span>·</span>'
+                f'  <span>{effort_label.get(eff, "")}</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            # Status + delete on one row, both touch-friendly
+            ctrl_cols = st.columns([3, 1], vertical_alignment="center")
+            with ctrl_cols[0]:
                 new_status = st.selectbox(
                     "Status",
                     status_options,
@@ -2890,8 +2894,8 @@ def render_step3(serp_result, pplx_result, openai_result, config):
                     key=f"status_{row_key}",
                     label_visibility="collapsed",
                 )
-            with head_cols[3]:
-                if st.button("✕", key=f"del_{row_key}", help="Remove this task"):
+            with ctrl_cols[1]:
+                if st.button("✕", key=f"del_{row_key}", help="Remove this task", use_container_width=True):
                     if is_custom:
                         custom[cat_id] = [
                             c for c in custom.get(cat_id, []) if c["label"] != label
@@ -2905,7 +2909,7 @@ def render_step3(serp_result, pplx_result, openai_result, config):
 
             if it.get("topic"):
                 st.markdown(
-                    f'<div class="task-topic">↳ Topic: {escape_html(it["topic"])}</div>',
+                    f'<div class="task-topic" style="font-size:13px; color:var(--vm-body); margin-top:8px;">↳ Topic: {escape_html(it["topic"])}</div>',
                     unsafe_allow_html=True,
                 )
             if it.get("why"):
@@ -2913,23 +2917,20 @@ def render_step3(serp_result, pplx_result, openai_result, config):
             if it.get("action"):
                 st.caption(f"**Action:** {it['action']}")
 
-            link_cols = st.columns([3, 2])
-            with link_cols[0]:
-                new_url = st.text_input(
-                    "Proof URL",
-                    value=it["url"],
-                    placeholder="https://... (the published article, profile, etc.)",
-                    key=f"url_{row_key}",
-                    label_visibility="collapsed",
-                )
-            with link_cols[1]:
-                new_notes = st.text_input(
-                    "Notes",
-                    value=it["notes"],
-                    placeholder="notes (optional)",
-                    key=f"notes_{row_key}",
-                    label_visibility="collapsed",
-                )
+            new_url = st.text_input(
+                "Proof URL",
+                value=it["url"],
+                placeholder="https://... (article URL once published)",
+                key=f"url_{row_key}",
+                label_visibility="collapsed",
+            )
+            new_notes = st.text_input(
+                "Notes",
+                value=it["notes"],
+                placeholder="notes (optional)",
+                key=f"notes_{row_key}",
+                label_visibility="collapsed",
+            )
 
             if (
                 new_status != it["status"]
