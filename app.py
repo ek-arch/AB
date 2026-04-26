@@ -731,6 +731,7 @@ PRIMARY_TASK = {
     "group": "_primary",
     "label": "Andrii Bruiaka",
     "engine": "google",
+    # Default; the actual runtime query is read from config["search_query"]
     "query": "Andrii Bruiaka",
 }
 
@@ -745,6 +746,9 @@ def load_config():
         "api_key": "",
         "perplexity_key": "",
         "openai_key": "",
+        "search_query": "Andrii Bruiaka",
+        "search_gl": "",  # country code (us, pt, gb, ...) — empty = Google decides
+        "search_hl": "",  # interface language (en, pt, ...) — empty = Google decides
         "owned_domains": DEFAULT_OWNED.copy(),
         "earned_domains": DEFAULT_EARNED.copy(),
         "negative_domains": ["fintelegram.com"],
@@ -921,11 +925,16 @@ def save_snapshot(task_id, data):
 # ============================================================
 # SERPAPI
 # ============================================================
-def call_serpapi(query, engine, api_key, timeout=30, start=0, num=10):
+def call_serpapi(query, engine, api_key, timeout=30, start=0, num=10, gl=None, hl=None):
     params = {"q": query, "engine": engine, "api_key": api_key, "num": num, "start": start}
     if engine == "google":
-        params["gl"] = "us"
-        params["hl"] = "en"
+        # Don't force gl/hl by default — the previous gl=us, hl=en was filtering
+        # out the PT/EU localized results you see in a browser session. Use the
+        # caller's choice or omit (= Google decides based on IP, like a browser).
+        if gl:
+            params["gl"] = gl
+        if hl:
+            params["hl"] = hl
     resp = requests.get("https://serpapi.com/search.json", params=params, timeout=timeout)
     if resp.status_code != 200:
         raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:200]}")
@@ -935,13 +944,11 @@ def call_serpapi(query, engine, api_key, timeout=30, start=0, num=10):
     return data
 
 
-def call_serpapi_multipage(query, engine, api_key, pages=3, timeout=45):
+def call_serpapi_multipage(query, engine, api_key, pages=3, timeout=45, gl=None, hl=None):
     """Fetch up to pages*10 SERP results.
 
-    Strategy: try a single num=30 call first (faster, fewer API credits,
-    more reliable for personal-name searches where Google has shallow
-    inventory). Fall back to per-page pagination if Google capped the
-    response or num= isn't honored.
+    gl / hl mirror Google's geo + language params. Pass None to let Google
+    decide based on the SerpAPI host IP (closest to a real browser session).
     """
     target = pages * 10
     page_counts = []
@@ -952,7 +959,7 @@ def call_serpapi_multipage(query, engine, api_key, pages=3, timeout=45):
 
     # Step 1: single big call (num=30)
     try:
-        data = call_serpapi(query, engine, api_key, timeout=timeout, num=target, start=0)
+        data = call_serpapi(query, engine, api_key, timeout=timeout, num=target, start=0, gl=gl, hl=hl)
         organic = data.get("organic_results") or []
         page_counts.append(len(organic))
         page_errors.append(None)
@@ -970,7 +977,7 @@ def call_serpapi_multipage(query, engine, api_key, pages=3, timeout=45):
     if len(all_organic) < target:
         for page in range(1, pages):  # start at page 2 (offset=10)
             try:
-                data = call_serpapi(query, engine, api_key, timeout=timeout, num=10, start=page * 10)
+                data = call_serpapi(query, engine, api_key, timeout=timeout, num=10, start=page * 10, gl=gl, hl=hl)
                 organic = data.get("organic_results") or []
                 added = 0
                 for r in organic:
@@ -1555,6 +1562,28 @@ with st.sidebar:
             type="password",
             help="Get one at platform.openai.com/api-keys. Used for the ChatGPT (web search) visibility check.",
         )
+        st.markdown("---")
+        query_input = st.text_input(
+            "Search query (Google)",
+            value=st.session_state.config.get("search_query", "Andrii Bruiaka"),
+            help="Plain name (no quotes) gives more results. Use OR for variants. Example: Andrii Bruiaka OR andriibruiaka",
+        )
+        gl_col, hl_col = st.columns(2)
+        with gl_col:
+            gl_input = st.text_input(
+                "Country code (gl, optional)",
+                value=st.session_state.config.get("search_gl", ""),
+                placeholder="e.g. pt, us, gb — empty = auto",
+                help="Restricts results to a country. Empty lets Google decide based on the SerpAPI server's location (closer to a real browser).",
+            )
+        with hl_col:
+            hl_input = st.text_input(
+                "Language (hl, optional)",
+                value=st.session_state.config.get("search_hl", ""),
+                placeholder="e.g. en, pt — empty = auto",
+            )
+        st.markdown("---")
+
         owned_input = st.text_area(
             "Owned Domains (one per line)",
             value="\n".join(st.session_state.config["owned_domains"]),
@@ -1577,6 +1606,9 @@ with st.sidebar:
             st.session_state.config["api_key"] = api_input.strip()
             st.session_state.config["perplexity_key"] = pplx_input.strip()
             st.session_state.config["openai_key"] = openai_input.strip()
+            st.session_state.config["search_query"] = query_input.strip()
+            st.session_state.config["search_gl"] = gl_input.strip()
+            st.session_state.config["search_hl"] = hl_input.strip()
             st.session_state.config["owned_domains"] = [
                 l.strip() for l in owned_input.split("\n") if l.strip()
             ]
@@ -2183,14 +2215,21 @@ def render_step1(primary_task, serp_result, config):
         unsafe_allow_html=True,
     )
 
-    if st.button("▶ Refresh Google name search (3 pages, top 30)", use_container_width=True, type="primary"):
+    runtime_query = (config.get("search_query") or "").strip() or primary_task["query"]
+    runtime_gl = (config.get("search_gl") or "").strip() or None
+    runtime_hl = (config.get("search_hl") or "").strip() or None
+    locale_hint = f" · {runtime_gl}/{runtime_hl}" if runtime_gl or runtime_hl else " · Google-decided locale (browser-like)"
+    st.caption(f"Query: `{runtime_query}`{locale_hint} — edit in Settings.")
+    if st.button("▶ Refresh Google search (up to 30 results)", use_container_width=True, type="primary"):
         try:
             st.session_state.task_status[primary_task["id"]] = "running"
             data = call_serpapi_multipage(
-                primary_task["query"],
+                runtime_query,
                 primary_task["engine"],
                 st.session_state.config["api_key"],
                 pages=3,
+                gl=runtime_gl,
+                hl=runtime_hl,
             )
             st.session_state.results[primary_task["id"]] = data
             st.session_state.task_status[primary_task["id"]] = "ok"
