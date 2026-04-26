@@ -2385,7 +2385,7 @@ def render_step2(pplx_result, openai_result, has_pplx, config):
     if pplx_result and "error" not in pplx_result:
         with st.expander(f"What Perplexity says · {len(pplx_citations)} citations", expanded=True):
             st.markdown(
-                f'<div class="kg-card"><div class="kg-desc">{escape_html(pplx_answer)}</div></div>',
+                f'<div class="llm-answer"><div class="llm-answer-text">{escape_html(pplx_answer)}</div></div>',
                 unsafe_allow_html=True,
             )
             if pplx_citations:
@@ -2402,7 +2402,7 @@ def render_step2(pplx_result, openai_result, has_pplx, config):
     if openai_result and "error" not in openai_result:
         with st.expander(f"What ChatGPT says · {len(openai_citations)} citations", expanded=True):
             st.markdown(
-                f'<div class="kg-card"><div class="kg-desc">{escape_html(openai_answer)}</div></div>',
+                f'<div class="llm-answer"><div class="llm-answer-text">{escape_html(openai_answer)}</div></div>',
                 unsafe_allow_html=True,
             )
             if openai_citations:

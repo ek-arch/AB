@@ -163,6 +163,30 @@ html, body, .stApp { color: var(--vm-body); }
   font-weight: 600 !important;
 }
 .stApp .kg-title { font-size: 18px !important; font-weight: 600 !important; }
+
+/* LLM-answer card (Perplexity / ChatGPT response) — same family as kg-card
+   but WITHOUT the 'KNOWLEDGE GRAPH' pseudo-element label that was overlapping
+   the answer text. */
+.stApp .llm-answer {
+  background: #fff;
+  border: 1px solid var(--vm-line);
+  border-left: 3px solid var(--vm-blue);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+.stApp .llm-answer-text {
+  font-family: var(--vm-font);
+  font-size: 14px;
+  color: var(--vm-body);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+@media (max-width: 768px) {
+  .stApp .llm-answer { padding: 12px 14px; margin-bottom: 12px; }
+  .stApp .llm-answer-text { font-size: 13px; }
+}
 .stApp .brand-mark::first-letter { color: var(--vm-blue) !important; }
 
 /* ---------- Override legacy button styling: drop uppercase + tracking, sentence case ---------- */
