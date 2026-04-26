@@ -1644,6 +1644,21 @@ with st.sidebar:
             height=100,
             help="Domains where any result auto-classifies as negative (e.g. watchdog/hit-piece sites)",
         )
+        # GitHub persistence diagnostics
+        if st.button("⚙ Test GitHub sync", use_container_width=True, help="Try a real write to your repo and show the exact error if it fails."):
+            tok = _github_token()
+            if not tok:
+                st.error("No `github_token` in Streamlit Secrets. Add it: github.com/settings/personal-access-tokens/new (Fine-grained, repo ek-arch/AB, Contents: Read and write).")
+            else:
+                ok, msg = push_tasks_to_github(
+                    {"_test": True, "ts": datetime.utcnow().isoformat()},
+                    path="config.public.json",
+                )
+                if ok:
+                    st.success(f"✅ {msg}. Check https://github.com/ek-arch/AB/commits/main — you should see a new commit.")
+                else:
+                    st.error(f"❌ Push failed: {msg}")
+
         if st.button("Save Settings", use_container_width=True):
             st.session_state.config["api_key"] = api_input.strip()
             st.session_state.config["perplexity_key"] = pplx_input.strip()
