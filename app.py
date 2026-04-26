@@ -937,35 +937,38 @@ def call_serpapi(query, engine, api_key, timeout=30, start=0):
 
 def call_serpapi_multipage(query, engine, api_key, pages=3, timeout=30):
     """Fetch N pages of SERP results and merge organic_results.
-    Always attempts all N pages even if one returns empty (don't early-break,
-    SerpAPI can return 0 on a flaky page but the next one is fine).
-    Dedupes by link to handle SerpAPI's occasional cross-page repeats.
-    Always slices to pages*10 results max (30 by default).
+    Always attempts all N pages even if one returns empty (don't early-break).
+    Dedupes by link. Records per-page counts and errors for diagnostics.
     """
     merged = None
     all_organic = []
     seen_links = set()
-    pages_with_data = 0
+    page_counts = []     # raw count per page
+    page_errors = []     # error string per page (or None)
     for page in range(pages):
         try:
             data = call_serpapi(query, engine, api_key, timeout=timeout, start=page * 10)
-        except Exception:
-            continue  # skip failed page, try the next
-        organic = data.get("organic_results") or []
-        if organic:
-            pages_with_data += 1
-        for r in organic:
-            link = (r.get("link") or "").lower()
-            if link and link in seen_links:
-                continue
-            seen_links.add(link)
-            all_organic.append(r)
-        if merged is None:
-            merged = data
+            organic = data.get("organic_results") or []
+            page_counts.append(len(organic))
+            page_errors.append(None)
+            for r in organic:
+                link = (r.get("link") or "").lower()
+                if link and link in seen_links:
+                    continue
+                seen_links.add(link)
+                all_organic.append(r)
+            if merged is None:
+                merged = data
+        except Exception as e:
+            page_counts.append(0)
+            page_errors.append(str(e)[:120])
+            continue
     if merged is None:
-        return {}
+        return {"_page_counts": page_counts, "_page_errors": page_errors, "organic_results": []}
     merged["organic_results"] = all_organic[: pages * 10]
-    merged["_pages_fetched"] = pages_with_data
+    merged["_pages_fetched"] = sum(1 for c in page_counts if c > 0)
+    merged["_page_counts"] = page_counts
+    merged["_page_errors"] = page_errors
     return merged
 
 
@@ -2224,10 +2227,34 @@ def render_step1(primary_task, serp_result, config):
     )
 
     pages_fetched = serp_result.get("_pages_fetched", 3)
+    page_counts = serp_result.get("_page_counts") or []
+    page_errors = serp_result.get("_page_errors") or []
     expander_title = f"All results · {len(organic)} visible"
     if hidden_count:
         expander_title += f" ({hidden_count} hidden as not relevant)"
     expander_title += f" across {pages_fetched} page{'s' if pages_fetched != 1 else ''}"
+
+    # Per-page diagnostics — visible above the result list so you can spot
+    # SerpAPI hiccups (e.g. Google has fewer than 30 results for the name).
+    if page_counts:
+        diag_parts = []
+        for i, cnt in enumerate(page_counts, 1):
+            err = page_errors[i - 1] if i - 1 < len(page_errors) else None
+            if err:
+                diag_parts.append(f"page {i}: <span style='color:var(--vm-bad)'>error</span>")
+            else:
+                diag_parts.append(f"page {i}: <strong>{cnt}</strong>")
+        st.markdown(
+            f'<div style="font-size:12px; color:var(--vm-muted); margin: 4px 0 8px;">'
+            f'SerpAPI returned: {" · ".join(diag_parts)} · {len(organic)} unique after dedupe'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        if any(page_errors):
+            with st.expander("Page errors (debug)", expanded=False):
+                for i, err in enumerate(page_errors, 1):
+                    if err:
+                        st.code(f"Page {i}: {err}")
 
     with st.expander(expander_title, expanded=True):
         for i, r in enumerate(organic):
