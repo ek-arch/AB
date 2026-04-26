@@ -749,6 +749,7 @@ def load_config():
         "search_query": "Andrii Bruiaka",
         "search_gl": "",  # country code (us, pt, gb, ...) — empty = Google decides
         "search_hl": "",  # interface language (en, pt, ...) — empty = Google decides
+        "manual_negative_urls": [],  # URLs you've spotted in your browser that SerpAPI doesn't catch
         "owned_domains": DEFAULT_OWNED.copy(),
         "earned_domains": DEFAULT_EARNED.copy(),
         "negative_domains": ["fintelegram.com"],
@@ -1618,6 +1619,12 @@ with st.sidebar:
             height=100,
             help="Domains where any result auto-classifies as negative (e.g. watchdog/hit-piece sites)",
         )
+        manual_neg_input = st.text_area(
+            "Manually tracked negative URLs (one per line)",
+            value="\n".join(st.session_state.config.get("manual_negative_urls", [])),
+            height=100,
+            help="URLs you've spotted in your browser that SerpAPI's anonymous SERP doesn't return. They'll appear in the result list as NEGATIVE rows and count toward the dashboard's negative-results KPI.",
+        )
         # GitHub persistence diagnostics
         if st.button("⚙ Test GitHub sync", use_container_width=True, help="Try a real write to your repo and show the exact error if it fails."):
             tok = _github_token()
@@ -1648,6 +1655,9 @@ with st.sidebar:
             ]
             st.session_state.config["negative_domains"] = [
                 l.strip() for l in negative_input.split("\n") if l.strip()
+            ]
+            st.session_state.config["manual_negative_urls"] = [
+                l.strip() for l in manual_neg_input.split("\n") if l.strip()
             ]
             save_config(st.session_state.config)
             st.success("Saved")
@@ -1925,7 +1935,12 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
     audit_run = False
     if serp_result and "error" not in serp_result:
         audit_run = True
-        raw = (serp_result.get("organic_results") or [])[:30]
+        raw = list((serp_result.get("organic_results") or [])[:30])
+        # Include manually-tracked URLs in the dashboard counts too
+        serp_links = {(r.get("link") or "").lower() for r in raw}
+        for url in (config.get("manual_negative_urls") or []):
+            if url and url.lower() not in serp_links:
+                raw.append({"link": url, "title": url, "_manual": True})
         irr = set(config.get("irrelevant", []))
         organic = [r for r in raw if result_key(r) not in irr]
         page1 = organic[:10]
@@ -2296,6 +2311,26 @@ def render_step1(primary_task, serp_result, config):
 
     raw_organic = (serp_result.get("organic_results") or [])[:30]
     irrelevant_set = set(st.session_state.config.get("irrelevant", []))
+
+    # Inject manually-tracked URLs that SerpAPI's anonymous SERP doesn't catch
+    serp_links = {(r.get("link") or "").lower() for r in raw_organic}
+    for url in (st.session_state.config.get("manual_negative_urls") or []):
+        if not url:
+            continue
+        if url.lower() in serp_links:
+            continue  # already in the audit organically
+        try:
+            from urllib.parse import urlparse
+            host = urlparse(url).netloc or url
+        except Exception:
+            host = url
+        raw_organic.append({
+            "link": url,
+            "title": host,
+            "snippet": "Manually tracked URL — not returned by SerpAPI's anonymous Google query but visible in your browser.",
+            "_manual": True,
+        })
+
     # Filter out results the user marked as not-relevant (wrong person, etc.)
     organic = [r for r in raw_organic if result_key(r) not in irrelevant_set]
     hidden_count = len(raw_organic) - len(organic)
