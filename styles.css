@@ -202,6 +202,36 @@ html, body, .stApp { color: var(--vm-body); }
 /* Tighten Streamlit column gaps so buttons sit on consistent spacing */
 .stApp [data-testid="stHorizontalBlock"] {
   gap: 8px !important;
+  align-items: center !important;
+}
+
+/* Strip Streamlit's wrapper margins so buttons sit flush with their column box.
+   Without this, the hide button's parent div adds extra vertical space that
+   makes it look offset from the OWNED pill. */
+.stApp .stButton,
+.stApp [data-testid="stButton"],
+.stApp .row-widget.stButton {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Inside a result row, wrap the pill so it claims a full-height flex slot */
+.stApp [data-testid="column"] .tag {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 38px !important;
+  margin: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Match button width to the pill width so visual weight is consistent */
+.stApp [data-testid="column"] .stButton > button {
+  width: 100% !important;
+  margin: 0 !important;
 }
 .stApp .stButton > button[kind="primary"] {
   background: var(--vm-blue) !important;
