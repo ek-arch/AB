@@ -2446,7 +2446,8 @@ def render_content_plan(config):
                         save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
                         st.rerun()
 
-        for it in items:
+        for idx, it in enumerate(items):
+            row_key = f"{pillar['id']}_{idx}_{it['title'][:40]}"
             with st.container(border=True):
                 head = st.columns([6, 2, 1])
                 with head[0]:
@@ -2456,11 +2457,11 @@ def render_content_plan(config):
                         "status",
                         status_options,
                         index=status_options.index(it["_status"]),
-                        key=f"cstatus_{it['title']}",
+                        key=f"cstatus_{row_key}",
                         label_visibility="collapsed",
                     )
                 with head[2]:
-                    if st.button("✕", key=f"cdel_{it['title']}", help="Hide this piece"):
+                    if st.button("✕", key=f"cdel_{row_key}", help="Hide this piece"):
                         if it.get("_custom"):
                             custom[f"content::{pillar['id']}"] = [
                                 c for c in custom.get(f"content::{pillar['id']}", []) if c["title"] != it["title"]
@@ -2492,7 +2493,7 @@ def render_content_plan(config):
                         "Published URL",
                         value=it["_url"],
                         placeholder="https://... (paste once published)",
-                        key=f"curl_{it['title']}",
+                        key=f"curl_{row_key}",
                         label_visibility="collapsed",
                     )
                 with link_cols[1]:
@@ -2500,7 +2501,7 @@ def render_content_plan(config):
                         "Notes",
                         value=it["_notes"],
                         placeholder="notes",
-                        key=f"cnotes_{it['title']}",
+                        key=f"cnotes_{row_key}",
                         label_visibility="collapsed",
                     )
 
@@ -2594,10 +2595,12 @@ def render_step3(serp_result, pplx_result, openai_result, config):
     total_counts = {"todo": 0, "in progress": 0, "done": 0}
     changed = False
 
-    def render_task(it, cat_id, is_custom):
+    def render_task(it, cat_id, is_custom, idx=0):
         nonlocal changed
         label = it["label"]
         eff = it.get("effort", 3)
+        # Compose a unique row-key prefix so duplicate labels never collide
+        row_key = f"{cat_id}_{idx}_{label[:60]}"
         with st.container(border=True):
             head_cols = st.columns([1, 4, 2, 1])
             with head_cols[0]:
@@ -2613,11 +2616,11 @@ def render_step3(serp_result, pplx_result, openai_result, config):
                     "Status",
                     status_options,
                     index=status_options.index(it["status"]),
-                    key=f"status_{cat_id}_{label}",
+                    key=f"status_{row_key}",
                     label_visibility="collapsed",
                 )
             with head_cols[3]:
-                if st.button("✕", key=f"del_{cat_id}_{label}", help="Remove this task"):
+                if st.button("✕", key=f"del_{row_key}", help="Remove this task"):
                     if is_custom:
                         custom[cat_id] = [
                             c for c in custom.get(cat_id, []) if c["label"] != label
@@ -2645,7 +2648,7 @@ def render_step3(serp_result, pplx_result, openai_result, config):
                     "Proof URL",
                     value=it["url"],
                     placeholder="https://... (the published article, profile, etc.)",
-                    key=f"url_{cat_id}_{label}",
+                    key=f"url_{row_key}",
                     label_visibility="collapsed",
                 )
             with link_cols[1]:
@@ -2653,7 +2656,7 @@ def render_step3(serp_result, pplx_result, openai_result, config):
                     "Notes",
                     value=it["notes"],
                     placeholder="notes (optional)",
-                    key=f"notes_{cat_id}_{label}",
+                    key=f"notes_{row_key}",
                     label_visibility="collapsed",
                 )
 
@@ -2761,9 +2764,9 @@ def render_step3(serp_result, pplx_result, openai_result, config):
                     save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
                     st.rerun()
 
-        for it in items:
+        for idx, it in enumerate(items):
             total_counts[it["status"]] += 1
-            render_task(it, cat_id, it["_custom"])
+            render_task(it, cat_id, it["_custom"], idx)
 
     st.markdown(
         f'<div class="section-title">Plan summary <small>{total_counts["todo"]} todo · {total_counts["in progress"]} doing · {total_counts["done"]} done</small></div>',
