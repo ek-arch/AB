@@ -139,7 +139,21 @@ html, body, .stApp { color: var(--vm-body); }
   color: var(--vm-ink) !important;
   letter-spacing: -0.025em !important;
 }
-.stApp .saturation-number { color: var(--vm-blue) !important; }
+.stApp .saturation-number {
+  color: var(--vm-blue) !important;
+  font-size: 44px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+.stApp .saturation-number span {
+  font-size: 20px !important;
+  color: var(--vm-faint) !important;
+}
+.stApp .legend-count {
+  font-size: 20px !important;
+  font-weight: 600 !important;
+}
+.stApp .kg-title { font-size: 18px !important; font-weight: 600 !important; }
 .stApp .brand-mark::first-letter { color: var(--vm-blue) !important; }
 
 /* ---------- Override legacy button styling: drop uppercase + tracking, sentence case ---------- */
