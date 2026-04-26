@@ -1918,19 +1918,42 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
     )
 
     # Real Streamlit buttons for navigation (anchor links can't switch views)
-    nav_cols = st.columns([1, 1, 1, 4])
+    def _switch_view(v):
+        st.session_state.view_radio = v
+
+    nav_cols = st.columns([1, 1, 1, 1, 3])
     with nav_cols[0]:
-        if st.button("→ Action plan", key="dash_to_actions", use_container_width=True):
-            st.session_state.view_radio = "03 · Action plan"
-            st.rerun()
+        st.button(
+            "→ Action plan",
+            key="dash_to_actions",
+            use_container_width=True,
+            on_click=_switch_view,
+            args=("03 · Action plan",),
+        )
     with nav_cols[1]:
-        if st.button("→ Google search", key="dash_to_google", use_container_width=True):
-            st.session_state.view_radio = "01 · Google search"
-            st.rerun()
+        st.button(
+            "→ Google search",
+            key="dash_to_google",
+            use_container_width=True,
+            on_click=_switch_view,
+            args=("01 · Google search",),
+        )
     with nav_cols[2]:
-        if st.button("→ LLM probes", key="dash_to_llm", use_container_width=True):
-            st.session_state.view_radio = "02 · LLM visibility"
-            st.rerun()
+        st.button(
+            "→ LLM probes",
+            key="dash_to_llm",
+            use_container_width=True,
+            on_click=_switch_view,
+            args=("02 · LLM visibility",),
+        )
+    with nav_cols[3]:
+        st.button(
+            "→ Content plan",
+            key="dash_to_content",
+            use_container_width=True,
+            on_click=_switch_view,
+            args=("04 · Content plan",),
+        )
 
 
 # ============================================================
