@@ -633,6 +633,48 @@ try:
 except Exception:
     pass
 
+# Force-collapse the sidebar on mobile viewports. Streamlit's `auto` mode
+# doesn't reliably detect iOS Safari, so we run a script in an invisible
+# iframe that reaches into the parent document and clicks the collapse
+# button if the viewport is narrow.
+try:
+    import streamlit.components.v1 as _components
+    _components.html(
+        """
+        <script>
+        (function(){
+          function tryCollapse() {
+            try {
+              var doc = window.parent.document;
+              var w = window.parent.innerWidth || document.documentElement.clientWidth;
+              if (w >= 768) return;
+              // Streamlit ≥1.36: aria-expanded on the sidebar section
+              var sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+              if (sidebar && sidebar.getAttribute('aria-expanded') === 'false') return;
+              // Click the in-sidebar collapse button (renders only when expanded)
+              var btn = doc.querySelector('[data-testid="stSidebarCollapseButton"] button')
+                     || doc.querySelector('[data-testid="stSidebarCollapseButton"]')
+                     || doc.querySelector('button[kind="header"]');
+              if (btn) { btn.click(); return; }
+              // Fallback: directly hide via inline style
+              if (sidebar) {
+                sidebar.style.transform = 'translateX(-100%)';
+                sidebar.setAttribute('aria-expanded', 'false');
+              }
+            } catch(e){}
+          }
+          // Try a few times because Streamlit re-renders DOM on hydration
+          [50, 200, 500, 1200, 2500].forEach(function(d){ setTimeout(tryCollapse, d); });
+          // Also re-collapse on orientation change to mobile
+          window.addEventListener('resize', tryCollapse);
+        })();
+        </script>
+        """,
+        height=0,
+    )
+except Exception:
+    pass
+
 # ============================================================
 # CONSTANTS
 # ============================================================

@@ -360,29 +360,56 @@ section.main > div.block-container {
 
 /* ---------- Mobile sidebar: burger-style overlay, fixed narrow width ---------- */
 @media (max-width: 768px) {
-  /* Sidebar is an overlay drawer, not full-screen */
-  [data-testid="stSidebar"] {
+  /* Sidebar always overlays as a fixed drawer on mobile.
+     Position: fixed so it floats over content instead of pushing it. */
+  section[data-testid="stSidebar"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
     width: 280px !important;
     min-width: 280px !important;
-    max-width: 80vw !important;
-    box-shadow: 4px 0 24px rgba(12, 18, 32, 0.18);
-    z-index: 999;
+    max-width: 85vw !important;
+    box-shadow: 4px 0 24px rgba(12, 18, 32, 0.25) !important;
+    z-index: 9999 !important;
+    transition: transform 0.25s ease-out !important;
   }
-  /* When the sidebar is collapsed, hide it offscreen completely */
-  [data-testid="stSidebar"][aria-expanded="false"] {
-    transform: translateX(-100%) !important;
+  /* Default: hidden offscreen. Overrides Streamlit's default expanded layout
+     so even before JS runs, the sidebar isn't covering content. */
+  section[data-testid="stSidebar"][aria-expanded="false"] {
+    transform: translateX(-110%) !important;
   }
-  /* Make the burger toggle button highly visible */
-  [data-testid="stSidebarCollapseButton"],
+  section[data-testid="stSidebar"][aria-expanded="true"] {
+    transform: translateX(0) !important;
+  }
+  /* The expand control (visible when sidebar is closed): make it a proper
+     hamburger pill in the top-left so it's findable on a phone. */
   [data-testid="collapsedControl"],
-  button[kind="header"] {
+  div[data-testid="stSidebarCollapsedControl"] {
+    display: flex !important;
+    position: fixed !important;
+    top: 10px !important;
+    left: 10px !important;
+    z-index: 10000 !important;
     background: var(--vm-blue) !important;
     color: #fff !important;
+    padding: 6px 10px !important;
     border-radius: 8px !important;
-    box-shadow: 0 2px 8px rgba(15, 47, 77, 0.25) !important;
-    z-index: 1000 !important;
+    box-shadow: 0 2px 8px rgba(15, 47, 77, 0.35) !important;
   }
-  /* Main content takes the full screen on mobile when sidebar is closed */
+  [data-testid="collapsedControl"] svg,
+  div[data-testid="stSidebarCollapsedControl"] svg { color: #fff !important; fill: #fff !important; }
+  /* Backdrop dim when sidebar is open */
+  section[data-testid="stSidebar"][aria-expanded="true"]::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 280px;
+    width: 100vw; height: 100vh;
+    background: rgba(12,18,32,0.35);
+    pointer-events: none;
+  }
+  /* Main content always takes the full screen on mobile (no left margin) */
+  section.main { margin-left: 0 !important; }
   section.main > div.block-container {
     padding-left: 1rem !important;
     padding-right: 1rem !important;
@@ -390,6 +417,14 @@ section.main > div.block-container {
   }
   /* Stat-card grid stacks to 2 cols on mobile, 1 on small */
   .vm-stats { grid-template-columns: 1fr 1fr !important; }
+  /* Dashboard NOW row also stacks gracefully */
+  div[style*="grid-template-columns: repeat(4, 1fr)"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  /* Activity row (1fr 2fr) stacks to single column on mobile */
+  div[style*="grid-template-columns: 1fr 2fr"] {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media (max-width: 480px) {
