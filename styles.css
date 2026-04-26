@@ -31,13 +31,57 @@
 }
 
 /* ---------- Global ---------- */
-html, body, [class*="st-"], [class*="css-"] {
+html, body, .stApp, .stApp p, .stApp span, .stApp div, .stApp label,
+.stApp button, .stApp input, .stApp textarea, .stApp select {
   font-family: var(--vm-font) !important;
   letter-spacing: -0.005em;
-  color: var(--vm-body);
+}
+html, body, .stApp { color: var(--vm-body); }
+
+/* Preserve Streamlit's icon fonts (Material Symbols / chevrons / SVG) */
+.material-icons, .material-symbols-outlined,
+[class*="MaterialSymbols"], [class*="material-symbols"],
+[class*="MuiSvgIcon"] {
+  font-family: 'Material Symbols Outlined', 'Material Icons' !important;
 }
 
 .stApp { background: var(--vm-bg); }
+
+/* ---------- Override existing CUSTOM_CSS Fraunces serif → Inter Tight navy ---------- */
+.stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp .display-serif {
+  font-family: var(--vm-font) !important;
+  color: var(--vm-ink) !important;
+  letter-spacing: -0.025em !important;
+}
+.stApp .query-text {
+  font-family: var(--vm-font) !important;
+  color: var(--vm-ink) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.025em !important;
+}
+.stApp .query-text::before, .stApp .query-text::after {
+  color: var(--vm-faint) !important;
+}
+.stApp .step-num {
+  font-family: var(--vm-font) !important;
+  color: var(--vm-blue) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.025em !important;
+}
+.stApp .step-title {
+  font-family: var(--vm-font) !important;
+  color: var(--vm-ink) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+}
+.stApp .saturation-number, .stApp .legend-count, .stApp .kg-title,
+.stApp .welcome-title, .stApp .task-group-label, .stApp .brand-mark {
+  font-family: var(--vm-font) !important;
+  color: var(--vm-ink) !important;
+  letter-spacing: -0.025em !important;
+}
+.stApp .saturation-number { color: var(--vm-blue) !important; }
+.stApp .brand-mark::first-letter { color: var(--vm-blue) !important; }
 
 /* Hide Streamlit chrome we don't need (keep "Manage app" link) */
 #MainMenu { visibility: hidden; }
