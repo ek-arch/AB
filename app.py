@@ -936,20 +936,36 @@ def call_serpapi(query, engine, api_key, timeout=30, start=0):
 
 
 def call_serpapi_multipage(query, engine, api_key, pages=3, timeout=30):
-    """Fetch N pages of SERP results and merge organic_results."""
+    """Fetch N pages of SERP results and merge organic_results.
+    Always attempts all N pages even if one returns empty (don't early-break,
+    SerpAPI can return 0 on a flaky page but the next one is fine).
+    Dedupes by link to handle SerpAPI's occasional cross-page repeats.
+    Always slices to pages*10 results max (30 by default).
+    """
     merged = None
     all_organic = []
+    seen_links = set()
+    pages_with_data = 0
     for page in range(pages):
-        data = call_serpapi(query, engine, api_key, timeout=timeout, start=page * 10)
+        try:
+            data = call_serpapi(query, engine, api_key, timeout=timeout, start=page * 10)
+        except Exception:
+            continue  # skip failed page, try the next
         organic = data.get("organic_results") or []
-        all_organic.extend(organic)
+        if organic:
+            pages_with_data += 1
+        for r in organic:
+            link = (r.get("link") or "").lower()
+            if link and link in seen_links:
+                continue
+            seen_links.add(link)
+            all_organic.append(r)
         if merged is None:
             merged = data
-        if not organic:
-            break
     if merged is None:
         return {}
-    merged["organic_results"] = all_organic
+    merged["organic_results"] = all_organic[: pages * 10]
+    merged["_pages_fetched"] = pages_with_data
     return merged
 
 
@@ -2207,10 +2223,11 @@ def render_step1(primary_task, serp_result, config):
         unsafe_allow_html=True,
     )
 
+    pages_fetched = serp_result.get("_pages_fetched", 3)
     expander_title = f"All results · {len(organic)} visible"
     if hidden_count:
         expander_title += f" ({hidden_count} hidden as not relevant)"
-    expander_title += " across 3 pages"
+    expander_title += f" across {pages_fetched} page{'s' if pages_fetched != 1 else ''}"
 
     with st.expander(expander_title, expanded=True):
         for i, r in enumerate(organic):
