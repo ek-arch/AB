@@ -358,6 +358,49 @@ section.main > div.block-container {
   margin: 1rem 0;
 }
 
+/* ---------- Mobile sidebar: burger-style overlay, fixed narrow width ---------- */
+@media (max-width: 768px) {
+  /* Sidebar is an overlay drawer, not full-screen */
+  [data-testid="stSidebar"] {
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 80vw !important;
+    box-shadow: 4px 0 24px rgba(12, 18, 32, 0.18);
+    z-index: 999;
+  }
+  /* When the sidebar is collapsed, hide it offscreen completely */
+  [data-testid="stSidebar"][aria-expanded="false"] {
+    transform: translateX(-100%) !important;
+  }
+  /* Make the burger toggle button highly visible */
+  [data-testid="stSidebarCollapseButton"],
+  [data-testid="collapsedControl"],
+  button[kind="header"] {
+    background: var(--vm-blue) !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(15, 47, 77, 0.25) !important;
+    z-index: 1000 !important;
+  }
+  /* Main content takes the full screen on mobile when sidebar is closed */
+  section.main > div.block-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    max-width: 100% !important;
+  }
+  /* Stat-card grid stacks to 2 cols on mobile, 1 on small */
+  .vm-stats { grid-template-columns: 1fr 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  .vm-stats { grid-template-columns: 1fr !important; }
+  [data-testid="stSidebar"] {
+    width: 90vw !important;
+    min-width: 0 !important;
+    max-width: 90vw !important;
+  }
+}
+
 /* ---------- Headings ---------- */
 .vm-h1 {
   font-size: 32px;
