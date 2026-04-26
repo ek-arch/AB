@@ -710,6 +710,20 @@ def load_config():
                 config.update(stored)
         except Exception:
             pass
+    # On a fresh container (Streamlit Cloud redeploy), config.json is empty
+    # but config.public.json may exist in git. Merge non-secret settings from it.
+    public_path = Path("config.public.json")
+    if public_path.exists():
+        try:
+            with open(public_path) as f:
+                public_stored = json.load(f)
+                # Only overlay if the field isn't already set locally with a non-default
+                for k, v in public_stored.items():
+                    if k in SECRET_CONFIG_KEYS:
+                        continue  # never overlay secrets from public file
+                    config[k] = v
+        except Exception:
+            pass
     # Cloud secret takes precedence if set
     try:
         if not config["api_key"] and "serpapi_key" in st.secrets:
@@ -729,12 +743,26 @@ def load_config():
     return config
 
 
+SECRET_CONFIG_KEYS = {"api_key", "perplexity_key", "openai_key", "github_token"}
+
+
+def _sanitize_config_for_git(config):
+    """Strip API keys before committing config to GitHub."""
+    return {k: v for k, v in (config or {}).items() if k not in SECRET_CONFIG_KEYS}
+
+
 def save_config(config):
     try:
         with open(CONFIG_FILE, "w") as f:
             json.dump(config, f, indent=2)
     except Exception as e:
         st.error(f"Could not save config: {e}")
+    # Mirror non-secret config to GitHub so 'hidden' results, owned/earned
+    # domain lists etc. survive redeploys on Streamlit Cloud.
+    push_tasks_to_github(
+        _sanitize_config_for_git(config),
+        path="config.public.json",
+    )
 
 
 def load_snapshots():
