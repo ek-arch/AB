@@ -1430,6 +1430,209 @@ with st.sidebar:
 
 
 # ============================================================
+# DASHBOARD — at-a-glance summary above the detailed steps
+# ============================================================
+EFFORT_LABELS = {1: "5–30 min", 2: "<2 h", 3: "½ day", 4: "multi-day", 5: "ongoing/weeks"}
+
+
+def render_dashboard(serp_result, pplx_result, openai_result, config):
+    """Top-of-page dashboard: 'Now' KPIs + 'Activity' task summary."""
+
+    # ---- Compute Now KPIs from current state ----
+    page1_aligned = page1_total = 0
+    kg_present = False
+    negatives = 0
+    audit_run = False
+    if serp_result and "error" not in serp_result:
+        audit_run = True
+        raw = (serp_result.get("organic_results") or [])[:30]
+        irr = set(config.get("irrelevant", []))
+        organic = [r for r in raw if result_key(r) not in irr]
+        page1 = organic[:10]
+        for r in page1:
+            cls = classify(r, config)
+            if cls in ("owned", "earned"):
+                page1_aligned += 1
+        page1_total = len(page1) or 10
+        for r in organic:
+            if classify(r, config) == "negative":
+                negatives += 1
+        kg_present = bool(serp_result.get("knowledge_graph"))
+
+    def llm_mentioned(result, parser):
+        if not result or "error" in result:
+            return None  # not run / errored
+        ans, _ = parser(result)
+        return "bruiaka" in (ans or "").lower()
+
+    pplx_state = llm_mentioned(pplx_result, parse_perplexity)
+    openai_state = llm_mentioned(openai_result, parse_openai)
+    llm_runs = sum(1 for s in (pplx_state, openai_state) if s is not None)
+    llm_mentions = sum(1 for s in (pplx_state, openai_state) if s is True)
+
+    # ---- Compute Activity from task store ----
+    doc = load_tasks()
+    states = doc["states"]
+    hidden = set(doc["hidden"])
+    custom = doc["custom"]
+
+    counts = {"todo": 0, "in progress": 0, "done": 0}
+    quick_wins = []  # (effort, priority, label, cat_id)
+    serp_urls = ""
+    citation_urls = ""
+    if serp_result and "error" not in serp_result:
+        serp_urls = " ".join((r.get("link") or "").lower() for r in (serp_result.get("organic_results") or []))
+    if pplx_result and "error" not in pplx_result:
+        _, c = parse_perplexity(pplx_result)
+        citation_urls += " " + " ".join((u or "").lower() for u in c)
+    if openai_result and "error" not in openai_result:
+        _, c = parse_openai(openai_result)
+        citation_urls += " " + " ".join((u or "").lower() for u in c)
+
+    for cat in ACTION_CATEGORIES:
+        for t in cat["tasks"]:
+            if t["label"] in hidden:
+                continue
+            saved = states.get(t["label"], {})
+            auto_done = auto_check_task(t, serp_urls, citation_urls)
+            status = saved.get("status", "done" if auto_done else "todo")
+            counts[status] += 1
+            if status != "done":
+                quick_wins.append(
+                    (t.get("effort", 3), t.get("priority", 2), t["label"], cat["id"])
+                )
+        for c in custom.get(cat["id"], []):
+            saved = states.get(c["label"], {})
+            status = saved.get("status", "todo")
+            counts[status] += 1
+            if status != "done":
+                quick_wins.append(
+                    (c.get("effort", 3), c.get("priority", 2), c["label"], cat["id"])
+                )
+
+    quick_wins.sort()  # by effort ascending, then priority
+    quick_wins = quick_wins[:5]
+
+    total_tasks = sum(counts.values()) or 1
+    done_pct = round(100 * counts["done"] / total_tasks)
+
+    # ---- Status helpers ----
+    def kpi_color(state):
+        return {"good": "var(--vm-green)", "warn": "#8c4500", "bad": "var(--vm-bad)", "muted": "var(--vm-muted)"}[state]
+
+    if not audit_run:
+        page1_state, page1_text = "muted", "—"
+    elif page1_aligned >= 7:
+        page1_state, page1_text = "good", "strong"
+    elif page1_aligned >= 4:
+        page1_state, page1_text = "warn", "moderate"
+    else:
+        page1_state, page1_text = "bad", "weak"
+
+    if not audit_run:
+        kg_state, kg_text = "muted", "—"
+    else:
+        kg_state, kg_text = ("good", "present") if kg_present else ("bad", "missing")
+
+    if llm_runs == 0:
+        llm_state, llm_text, llm_sub = "muted", "—", "no probes run yet"
+    elif llm_mentions == llm_runs:
+        llm_state, llm_text, llm_sub = "good", f"{llm_mentions}/{llm_runs}", "mentioned across all probes"
+    elif llm_mentions > 0:
+        llm_state, llm_text, llm_sub = "warn", f"{llm_mentions}/{llm_runs}", "partial mention"
+    else:
+        llm_state, llm_text, llm_sub = "bad", f"0/{llm_runs}", "not mentioned"
+
+    if not audit_run:
+        neg_state, neg_text = "muted", "—"
+    elif negatives == 0:
+        neg_state, neg_text = "good", "0"
+    else:
+        neg_state, neg_text = "bad", str(negatives)
+
+    # ---- Render: NOW row ----
+    st.markdown(
+        f"""
+        <div style="display:flex; align-items:baseline; gap:12px; margin: 4px 0 12px;">
+          <div style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--vm-muted); font-weight:600;">Now</div>
+          <div style="height:1px; background:var(--vm-line); flex:1;"></div>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:24px;">
+          <div style="border:1px solid var(--vm-line); border-radius:10px; padding:14px 16px; background:#fff;">
+            <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:4px;">Page 1 saturation</div>
+            <div style="font-size:28px; font-weight:600; color:{kpi_color(page1_state)}; line-height:1; letter-spacing:-0.02em;">
+              {page1_aligned}<span style="font-size:16px; color:var(--vm-faint); font-weight:500;">/{page1_total}</span>
+            </div>
+            <div style="font-size:12px; color:{kpi_color(page1_state)}; margin-top:6px; font-weight:500;">{page1_text}</div>
+          </div>
+          <div style="border:1px solid var(--vm-line); border-radius:10px; padding:14px 16px; background:#fff;">
+            <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:4px;">Knowledge graph</div>
+            <div style="font-size:24px; font-weight:600; color:{kpi_color(kg_state)}; line-height:1.05; letter-spacing:-0.02em;">{kg_text}</div>
+            <div style="font-size:12px; color:var(--vm-muted); margin-top:6px;">Google entity card</div>
+          </div>
+          <div style="border:1px solid var(--vm-line); border-radius:10px; padding:14px 16px; background:#fff;">
+            <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:4px;">LLM mentions</div>
+            <div style="font-size:24px; font-weight:600; color:{kpi_color(llm_state)}; line-height:1.05; letter-spacing:-0.02em;">{llm_text}</div>
+            <div style="font-size:12px; color:var(--vm-muted); margin-top:6px;">{llm_sub}</div>
+          </div>
+          <div style="border:1px solid var(--vm-line); border-radius:10px; padding:14px 16px; background:#fff;">
+            <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:4px;">Negative results</div>
+            <div style="font-size:28px; font-weight:600; color:{kpi_color(neg_state)}; line-height:1; letter-spacing:-0.02em;">{neg_text}</div>
+            <div style="font-size:12px; color:var(--vm-muted); margin-top:6px;">in top 30</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ---- Render: ACTIVITY row ----
+    quick_html = ""
+    if quick_wins:
+        rows = []
+        for eff, prio, label, cat_id in quick_wins:
+            rows.append(
+                f'<a href="#cat-{cat_id}" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--vm-line); text-decoration:none; color:var(--vm-ink);">'
+                f'<span style="font-size:13px; font-weight:500;">{escape_html(label)}</span>'
+                f'<span style="font-size:11px; color:var(--vm-muted); margin-left:12px; white-space:nowrap;">{EFFORT_LABELS[eff]} · P{prio}</span>'
+                f'</a>'
+            )
+        quick_html = "".join(rows)
+    else:
+        quick_html = '<div style="font-size:13px; color:var(--vm-muted); padding:8px 0;">All open tasks complete 🎉</div>'
+
+    st.markdown(
+        f"""
+        <div style="display:flex; align-items:baseline; gap:12px; margin: 4px 0 12px;">
+          <div style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--vm-muted); font-weight:600;">Activity</div>
+          <div style="height:1px; background:var(--vm-line); flex:1;"></div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px; margin-bottom:32px;">
+          <div style="border:1px solid var(--vm-line); border-radius:10px; padding:16px 18px; background:#fff;">
+            <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:8px;">Action plan progress</div>
+            <div style="font-size:36px; font-weight:600; color:var(--vm-blue); line-height:1; letter-spacing:-0.025em;">
+              {done_pct}<span style="font-size:18px; color:var(--vm-faint); font-weight:500;">%</span>
+            </div>
+            <div style="display:flex; gap:14px; margin-top:14px; font-size:12px;">
+              <div><span style="font-weight:600; color:var(--vm-ink);">{counts['done']}</span> <span style="color:var(--vm-muted);">done</span></div>
+              <div><span style="font-weight:600; color:var(--vm-ink);">{counts['in progress']}</span> <span style="color:var(--vm-muted);">doing</span></div>
+              <div><span style="font-weight:600; color:var(--vm-ink);">{counts['todo']}</span> <span style="color:var(--vm-muted);">todo</span></div>
+            </div>
+            <a href="#step-3-action" style="display:inline-block; margin-top:14px; font-size:12px; color:var(--vm-blue); text-decoration:none; font-weight:500;">Open action plan ↓</a>
+          </div>
+          <div style="border:1px solid var(--vm-line); border-radius:10px; padding:16px 18px; background:#fff;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+              <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); font-weight:600;">Quickest wins</div>
+              <div style="font-size:11px; color:var(--vm-faint);">sorted by effort ↑</div>
+            </div>
+            {quick_html}
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================
 # MAIN PANEL
 # ============================================================
 def render_strategy():
@@ -1453,6 +1656,17 @@ def render_strategy():
 
     serp_result = st.session_state.results.get(primary_task["id"]) if primary_task else None
     pplx_result = st.session_state.perplexity_result
+    openai_result = st.session_state.openai_result
+
+    # ============================================================
+    # DASHBOARD — at-a-glance "Now" + "Activity"
+    # ============================================================
+    render_dashboard(
+        serp_result=serp_result,
+        pplx_result=pplx_result,
+        openai_result=openai_result,
+        config=st.session_state.config,
+    )
 
     # ============================================================
     # STEP 1 — Google
