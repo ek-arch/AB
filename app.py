@@ -1410,11 +1410,27 @@ with st.sidebar:
             time.sleep(0.5)
             st.rerun()
 
-    # Navigation — anchor links to sections
+    # Navigation — switches main panel between views
+    if "current_view" not in st.session_state:
+        st.session_state.current_view = "Overview"
+
+    st.markdown('<div class="section-label">Navigation</div>', unsafe_allow_html=True)
+    new_view = st.radio(
+        "View",
+        ["Overview", "01 · Google search", "02 · LLM visibility", "03 · Action plan"],
+        index=["Overview", "01 · Google search", "02 · LLM visibility", "03 · Action plan"].index(
+            st.session_state.current_view
+        ),
+        label_visibility="collapsed",
+        key="view_radio",
+    )
+    if new_view != st.session_state.current_view:
+        st.session_state.current_view = new_view
+        st.rerun()
+
     st.markdown(
         """
-        <div class="section-label">Navigation</div>
-        <div class="nav-links">
+        <div class="nav-links" style="display:none;">
           <a href="#step-1-google" class="nav-link nav-link-step">01 · Google search</a>
           <a href="#step-2-llm" class="nav-link nav-link-step">02 · LLM visibility</a>
           <a href="#step-3-action" class="nav-link nav-link-step">03 · Action plan</a>
@@ -1658,19 +1674,37 @@ def render_strategy():
     pplx_result = st.session_state.perplexity_result
     openai_result = st.session_state.openai_result
 
-    # ============================================================
-    # DASHBOARD — at-a-glance "Now" + "Activity"
-    # ============================================================
-    render_dashboard(
-        serp_result=serp_result,
-        pplx_result=pplx_result,
-        openai_result=openai_result,
-        config=st.session_state.config,
-    )
+    view = st.session_state.get("current_view", "Overview")
 
     # ============================================================
-    # STEP 1 — Google
+    # OVERVIEW VIEW — dashboard only, then return
     # ============================================================
+    if view == "Overview":
+        render_dashboard(
+            serp_result=serp_result,
+            pplx_result=pplx_result,
+            openai_result=openai_result,
+            config=st.session_state.config,
+        )
+        return
+
+    # ============================================================
+    # Dispatch to the correct step renderer.
+    # Each step is implemented as a standalone function (defined below
+    # render_strategy) so navigation is a clean view-switch.
+    # ============================================================
+    if view == "01 · Google search":
+        render_step1(primary_task, serp_result, st.session_state.config)
+        return
+    if view == "02 · LLM visibility":
+        render_step2(pplx_result, openai_result, has_pplx, st.session_state.config)
+        return
+    # Default: action plan
+    render_step3(serp_result, pplx_result, openai_result, st.session_state.config)
+
+
+def render_step1(primary_task, serp_result, config):
+    """Step 1 — Google search SERP audit."""
     st.markdown(
         '<a id="step-1-google"></a>'
         '<div class="step-block first">'
@@ -1824,12 +1858,12 @@ def render_strategy():
                         save_config(st.session_state.config)
                         st.rerun()
 
-    # ============================================================
-    # STEP 2 — LLM
-    # ============================================================
+
+def render_step2(pplx_result, openai_result, has_pplx, config):
+    """Step 2 — LLM visibility (Perplexity + ChatGPT probes)."""
     st.markdown(
         '<a id="step-2-llm"></a>'
-        '<div class="step-block">'
+        '<div class="step-block first">'
         '<div class="step-header"><div class="step-num">02</div><div class="step-title">LLM visibility</div></div>'
         '<div class="step-subtitle">Does the AI search layer know who this is? What does it say, and which sources does it cite?</div>'
         '</div>',
@@ -1957,14 +1991,27 @@ def render_strategy():
     elif openai_result and "error" in openai_result:
         st.error(f"ChatGPT: {openai_result['error']}")
 
+
+def render_step3(serp_result, pplx_result, openai_result, config):
+    """Step 3 — Action plan (tasks with status, effort, sort)."""
+    # Compute citation/serp blobs for auto-check
+    organic = []
+    if serp_result and "error" not in serp_result:
+        raw = (serp_result.get("organic_results") or [])[:30]
+        irr = set(config.get("irrelevant", []))
+        organic = [r for r in raw if result_key(r) not in irr]
+
+    pplx_citations = []
+    openai_citations = []
+    if pplx_result and "error" not in pplx_result:
+        _, pplx_citations = parse_perplexity(pplx_result)
+    if openai_result and "error" not in openai_result:
+        _, openai_citations = parse_openai(openai_result)
     all_citations = pplx_citations + openai_citations
 
-    # ============================================================
-    # STEP 3 — Action plan
-    # ============================================================
     st.markdown(
         '<a id="step-3-action"></a>'
-        '<div class="step-block">'
+        '<div class="step-block first">'
         '<div class="step-header"><div class="step-num">03</div><div class="step-title">Action plan</div></div>'
         '<div class="step-subtitle">Concrete tasks grouped by category. Mark status, paste the proof URL when each is published. Auto-detection flags items already showing on page 1 or in Perplexity citations.</div>'
         '</div>',
