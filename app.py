@@ -1977,10 +1977,10 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
     def _switch_view(v):
         st.session_state.view_radio = v
 
-    nav_cols = st.columns([1, 1, 1, 1, 3])
+    nav_cols = st.columns(4)
     with nav_cols[0]:
         st.button(
-            "→ Action plan",
+            "Action plan →",
             key="dash_to_actions",
             use_container_width=True,
             on_click=_switch_view,
@@ -1988,7 +1988,7 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
         )
     with nav_cols[1]:
         st.button(
-            "→ Google search",
+            "Google →",
             key="dash_to_google",
             use_container_width=True,
             on_click=_switch_view,
@@ -1996,7 +1996,7 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
         )
     with nav_cols[2]:
         st.button(
-            "→ LLM probes",
+            "LLM probes →",
             key="dash_to_llm",
             use_container_width=True,
             on_click=_switch_view,
@@ -2004,7 +2004,7 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
         )
     with nav_cols[3]:
         st.button(
-            "→ Content plan",
+            "Content plan →",
             key="dash_to_content",
             use_container_width=True,
             on_click=_switch_view,
@@ -2170,7 +2170,7 @@ def render_step1(primary_task, serp_result, config):
             full_snippet = r.get("snippet") or ""
             snippet = escape_html(full_snippet)
 
-            row_cols = st.columns([0.5, 7, 1.2, 1], vertical_alignment="center")
+            row_cols = st.columns([0.5, 7, 1.4, 1], vertical_alignment="center")
             with row_cols[0]:
                 st.markdown(
                     f'<div style="font-family: \'Fraunces\', serif; font-size: 28px; font-weight: 500; color: var(--muted); padding-top: 8px;">{i+1:02d}</div>',
@@ -2192,9 +2192,14 @@ def render_step1(primary_task, serp_result, config):
                     unsafe_allow_html=True,
                 )
             with row_cols[2]:
-                st.markdown(
-                    f'<div class="tag {cls}">{cls}</div>',
-                    unsafe_allow_html=True,
+                # Status as a disabled Streamlit button: identical chrome to
+                # the hide button next to it, so heights line up perfectly.
+                st.button(
+                    cls.upper(),
+                    key=f"tag_btn_{i}_{result_key(r)[:50]}",
+                    help=f"Classification: {cls}",
+                    use_container_width=True,
+                    disabled=True,
                 )
             with row_cols[3]:
                 if st.button("✕ hide", key=f"hide_{i}_{result_key(r)[:60]}", help="Mark as not relevant (wrong person, etc.) — hides from breakdown and saturation count"):
@@ -2209,17 +2214,19 @@ def render_step1(primary_task, serp_result, config):
     if hidden_count:
         with st.expander(f"Hidden as not relevant ({hidden_count}) — restore"):
             irr = list(st.session_state.config.get("irrelevant", []))
-            for r in raw_organic:
+            seen_rk = set()
+            for ridx, r in enumerate(raw_organic):
                 rk = result_key(r)
-                if rk not in irrelevant_set:
+                if rk not in irrelevant_set or rk in seen_rk:
                     continue
+                seen_rk.add(rk)
                 cols = st.columns([7, 1])
                 with cols[0]:
                     title = r.get("title") or "Untitled"
                     link = r.get("link") or ""
                     st.markdown(f"**{title}**  \n[{link}]({link})")
                 with cols[1]:
-                    if st.button("Restore", key=f"restore_irr_{rk[:60]}"):
+                    if st.button("Restore", key=f"restore_irr_{ridx}_{rk[:50]}"):
                         irr = [k for k in irr if k != rk]
                         st.session_state.config["irrelevant"] = irr
                         save_config(st.session_state.config)

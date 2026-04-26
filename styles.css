@@ -170,16 +170,31 @@ html, body, .stApp { color: var(--vm-body); }
   text-transform: none !important;
   letter-spacing: -0.005em !important;
   font-weight: 500 !important;
+  font-size: 13px !important;
   border-radius: 8px !important;
   text-align: center !important;
-  padding: 0 0.9rem !important;
+  padding: 0 0.7rem !important;
   height: 38px !important;
   min-height: 38px !important;
-  line-height: 1 !important;
+  line-height: 1.1 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Disabled status buttons (the OWNED/EARNED/etc pills) get coloured fills */
+.stApp .stButton > button:disabled {
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.04em !important;
+  cursor: default !important;
+  opacity: 1 !important;
+  background: var(--vm-panel) !important;
+  color: var(--vm-muted) !important;
+  border-color: var(--vm-line) !important;
 }
 
 /* Tags / status pills — match the button height so a row of buttons + pill aligns. */
