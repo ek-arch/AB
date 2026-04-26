@@ -27,12 +27,10 @@ _CSS_PATH = Path(__file__).parent / "styles.css"
 
 
 def inject_css() -> None:
-    """Inject styles.css once per session. Call right after set_page_config."""
-    if st.session_state.get("_vm_css_injected"):
-        return
+    """Inject styles.css on every rerun (no session-state guard, so CSS persists
+    across Streamlit reruns)."""
     css = _CSS_PATH.read_text(encoding="utf-8")
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-    st.session_state["_vm_css_injected"] = True
 
 
 def _html(markup: str) -> None:

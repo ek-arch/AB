@@ -55,10 +55,53 @@ html, body, .stApp, .stApp p, .stApp span, .stApp div, .stApp label,
 html, body, .stApp { color: var(--vm-body); }
 
 /* Preserve Streamlit's icon fonts (Material Symbols / chevrons / SVG) */
-.material-icons, .material-symbols-outlined,
-[class*="MaterialSymbols"], [class*="material-symbols"],
-[class*="MuiSvgIcon"] {
-  font-family: 'Material Symbols Outlined', 'Material Icons' !important;
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded");
+
+.material-icons, .material-symbols-outlined, .material-symbols-rounded,
+[class*="MaterialSymbols"], [class*="material-symbols"], [class*="material-icons"],
+[class*="MuiSvgIcon"], [data-icon], i.material-icons, i.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', 'Material Symbols Rounded',
+               'Material Icons' !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hard fallback: if the Material Symbols font still fails to load, suppress
+   the literal "keyboard_arrow_right" text leak by hiding the icon stub.
+   The expander remains fully functional via the summary click. */
+[data-testid="stExpander"] summary [class*="iconContainer" i],
+[data-testid="stExpander"] summary [data-testid*="icon" i],
+[data-testid="stExpander"] details summary > span[class*="emotion"]:has(> span),
+[data-testid="stExpander"] details summary span[aria-hidden="true"] {
+  font-size: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  overflow: hidden !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+[data-testid="stExpander"] details summary span[aria-hidden="true"]::before {
+  content: "›";
+  font-size: 18px;
+  color: var(--vm-muted);
+  font-family: var(--vm-font);
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform 120ms;
+}
+[data-testid="stExpander"] details[open] summary span[aria-hidden="true"]::before {
+  transform: rotate(90deg);
 }
 
 .stApp { background: var(--vm-bg); }
