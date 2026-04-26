@@ -333,10 +333,42 @@ section[data-testid="stSidebar"] .brand-tag {
   border-color: var(--vm-line) !important;
 }
 
-/* Hide Streamlit chrome we don't need (keep "Manage app" link) */
-#MainMenu { visibility: hidden; }
+/* Hide Streamlit chrome we don't need */
+#MainMenu { visibility: hidden; display: none !important; }
 header[data-testid="stHeader"] { background: transparent; height: 0; }
-footer { visibility: hidden; }
+footer { visibility: hidden; display: none !important; }
+
+/* Hide the "Made with Streamlit" badge and other branding */
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+.viewerBadge_container__1QSob,
+.styles_viewerBadge__1yB5_,
+.viewerBadge_link__1S137,
+.viewerBadge_text__1JaDK,
+a[href*="streamlit.io"],
+a[href*="share.streamlit.io"] {
+  display: none !important;
+}
+
+/* Hide the Streamlit toolbar (Deploy, Share, etc.) on all viewports */
+[data-testid="stToolbar"] { display: none !important; }
+[data-testid="stToolbarActions"] { display: none !important; }
+[data-testid="stAppDeployButton"] { display: none !important; }
+
+/* Hide the deploy / running indicator pill */
+.stApp [data-testid="stToolbarActionButton"] { display: none !important; }
+
+/* On mobile: nuke everything Streamlit-branded that survived above */
+@media (max-width: 768px) {
+  header[data-testid="stHeader"] { display: none !important; }
+  [data-testid="stToolbar"] { display: none !important; }
+  [data-testid="stStatusWidget"] { display: none !important; }
+  [data-testid="stDecoration"] { display: none !important; }
+  [title="streamlitApp"] { display: none !important; }
+  iframe[title="streamlitApp"] { display: none !important; }
+  /* The "running" spinner that pops in the top-right */
+  [data-testid="stConnectionStatus"] { display: none !important; }
+}
 
 /* Tighter main container */
 section.main > div.block-container {
