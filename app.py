@@ -746,7 +746,7 @@ def load_config():
         "api_key": "",
         "perplexity_key": "",
         "openai_key": "",
-        "search_query": "Andrii Bruiaka",
+        "search_query": "Andrii Bruiaka\nandriibruiaka\nAndrew Bruiaka\n\"Andrii Bruiaka\" Onicore\nAndrii Bruiaka fintech",
         "search_gl": "",  # country code (us, pt, gb, ...) — empty = Google decides
         "search_hl": "",  # interface language (en, pt, ...) — empty = Google decides
         "owned_domains": DEFAULT_OWNED.copy(),
@@ -942,6 +942,47 @@ def call_serpapi(query, engine, api_key, timeout=30, start=0, num=10, gl=None, h
     if "error" in data:
         raise RuntimeError(data["error"])
     return data
+
+
+def call_serpapi_multiquery(queries, engine, api_key, timeout=45, gl=None, hl=None):
+    """Run multiple search queries, merge organic_results, dedupe by URL.
+    For personal-name brands the SerpAPI anonymous SERP for one exact query
+    is shallow (~10 unique URLs). Running 4-5 query variants typically pulls
+    25-40 unique URLs across the brand surface.
+    """
+    merged = None
+    all_organic = []
+    seen_links = set()
+    page_counts = []
+    page_errors = []
+    for q in queries:
+        try:
+            data = call_serpapi(q, engine, api_key, timeout=timeout, num=30, start=0, gl=gl, hl=hl)
+            organic = data.get("organic_results") or []
+            page_counts.append(len(organic))
+            page_errors.append(None)
+            for r in organic:
+                link = (r.get("link") or "").lower()
+                if link and link not in seen_links:
+                    seen_links.add(link)
+                    all_organic.append(r)
+            if merged is None:
+                merged = data
+        except Exception as e:
+            page_counts.append(0)
+            page_errors.append(f"'{q[:40]}': {e}"[:160])
+            continue
+    if merged is None:
+        return {"_page_counts": page_counts, "_page_errors": page_errors, "organic_results": []}
+    merged["organic_results"] = all_organic[:30]
+    merged["_pages_fetched"] = sum(1 for c in page_counts if c > 0)
+    merged["_page_counts"] = page_counts
+    merged["_page_errors"] = page_errors
+    merged["_serp_depth_note"] = (
+        f"{len(all_organic)} unique URLs across {len(queries)} query variants. "
+        + ("Add more variants in Settings → Search query to broaden further." if len(all_organic) < 30 else "")
+    )
+    return merged
 
 
 def call_serpapi_multipage(query, engine, api_key, pages=3, timeout=45, gl=None, hl=None):
@@ -1563,10 +1604,11 @@ with st.sidebar:
             help="Get one at platform.openai.com/api-keys. Used for the ChatGPT (web search) visibility check.",
         )
         st.markdown("---")
-        query_input = st.text_input(
-            "Search query (Google)",
+        query_input = st.text_area(
+            "Search queries (one per line)",
             value=st.session_state.config.get("search_query", "Andrii Bruiaka"),
-            help="Plain name (no quotes) gives more results. Use OR for variants. Example: Andrii Bruiaka OR andriibruiaka",
+            height=120,
+            help="Each line is a separate Google query. Results are merged and deduped by URL. Add variants (handle, alternate spelling, name + company) to broaden the brand surface.",
         )
         gl_col, hl_col = st.columns(2)
         with gl_col:
@@ -2215,19 +2257,19 @@ def render_step1(primary_task, serp_result, config):
         unsafe_allow_html=True,
     )
 
-    runtime_query = (config.get("search_query") or "").strip() or primary_task["query"]
+    raw_queries = (config.get("search_query") or primary_task["query"]).strip()
+    queries = [q.strip() for q in raw_queries.split("\n") if q.strip()]
     runtime_gl = (config.get("search_gl") or "").strip() or None
     runtime_hl = (config.get("search_hl") or "").strip() or None
     locale_hint = f" · {runtime_gl}/{runtime_hl}" if runtime_gl or runtime_hl else " · Google-decided locale (browser-like)"
-    st.caption(f"Query: `{runtime_query}`{locale_hint} — edit in Settings.")
-    if st.button("▶ Refresh Google search (up to 30 results)", use_container_width=True, type="primary"):
+    st.caption(f"{len(queries)} query variant{'s' if len(queries) != 1 else ''}{locale_hint} — edit in Settings.")
+    if st.button(f"▶ Refresh Google search ({len(queries)} queries · merged)", use_container_width=True, type="primary"):
         try:
             st.session_state.task_status[primary_task["id"]] = "running"
-            data = call_serpapi_multipage(
-                runtime_query,
+            data = call_serpapi_multiquery(
+                queries,
                 primary_task["engine"],
                 st.session_state.config["api_key"],
-                pages=3,
                 gl=runtime_gl,
                 hl=runtime_hl,
             )
