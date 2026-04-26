@@ -28,6 +28,22 @@
 
   --vm-font: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont,
              "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* === Hijack the legacy CUSTOM_CSS variables so all old rules adopt the new palette === */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f7f8fa;
+  --border: #e3e6ec;
+  --border-bright: #cdd3df;
+  --text: #0c1220;
+  --text-dim: #222a3a;
+  --muted: #6b7488;
+  --accent: #1d4d7a;
+  --accent-light: #0f2f4d;
+  --good: #1f7a3f;
+  --warn: #8c4500;
+  --bad: #b3251f;
+  --info: #1d4d7a;
 }
 
 /* ---------- Global ---------- */
@@ -82,6 +98,100 @@ html, body, .stApp { color: var(--vm-body); }
 }
 .stApp .saturation-number { color: var(--vm-blue) !important; }
 .stApp .brand-mark::first-letter { color: var(--vm-blue) !important; }
+
+/* ---------- Override legacy button styling: drop uppercase + tracking, sentence case ---------- */
+.stApp .stButton > button {
+  text-transform: none !important;
+  letter-spacing: -0.005em !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  text-align: center !important;
+  padding: 0.55rem 0.9rem !important;
+}
+.stApp .stButton > button[kind="primary"] {
+  background: var(--vm-blue) !important;
+  border: 1px solid var(--vm-blue) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: -0.005em !important;
+  padding: 0.7rem 1rem !important;
+  box-shadow: 0 1px 0 rgba(15, 47, 77, 0.3),
+              0 4px 14px rgba(29, 77, 122, 0.28) !important;
+}
+.stApp .stButton > button[kind="primary"]:hover {
+  background: var(--vm-blue-deep) !important;
+  border-color: var(--vm-blue-deep) !important;
+}
+
+/* ---------- Drop legacy expander uppercase / wide tracking ---------- */
+.stApp .streamlit-expanderHeader,
+.stApp [data-testid="stExpander"] summary,
+.stApp [data-testid="stExpander"] details > summary,
+.stApp [data-testid="stExpander"] details > summary > span {
+  font-family: var(--vm-font) !important;
+  text-transform: none !important;
+  letter-spacing: -0.005em !important;
+  color: var(--vm-ink) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+/* ---------- Drop the giant uppercase tracked labels everywhere ---------- */
+.stApp label, .stApp .section-label, .stApp .saturation-label,
+.stApp .legend-label, .stApp .kg-type, .stApp .query-meta,
+.stApp .nav-link, .stApp .status-pill, .stApp .brand-tag,
+.stApp .welcome-hint, .stApp .no-kg, .stApp .tag {
+  text-transform: none !important;
+  letter-spacing: -0.003em !important;
+  font-family: var(--vm-font) !important;
+}
+
+/* ---------- Body text → Inter, dark navy ink, regular weight ---------- */
+.stApp p, .stApp .step-subtitle, .stApp .welcome-body,
+.stApp .saturation-card, .stApp .kg-desc {
+  font-family: var(--vm-font) !important;
+  color: var(--vm-body) !important;
+  letter-spacing: -0.005em !important;
+}
+.stApp .step-subtitle { font-size: 14px !important; line-height: 1.55 !important; }
+
+/* ---------- Sidebar: kill old monospace/Fraunces vibes ---------- */
+section[data-testid="stSidebar"] * {
+  font-family: var(--vm-font) !important;
+}
+section[data-testid="stSidebar"] .brand-mark {
+  font-weight: 600 !important;
+  font-size: 17px !important;
+  color: var(--vm-ink) !important;
+}
+section[data-testid="stSidebar"] .brand-tag {
+  font-size: 11px !important;
+  color: var(--vm-muted) !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* ---------- Tag/pill colors using new palette ---------- */
+.stApp .tag.owned {
+  color: #fff !important;
+  background: var(--vm-blue) !important;
+  border-color: var(--vm-blue) !important;
+}
+.stApp .tag.earned {
+  color: var(--vm-blue-deep) !important;
+  background: var(--vm-blue-soft) !important;
+  border-color: var(--vm-blue-soft) !important;
+}
+.stApp .tag.negative {
+  color: var(--vm-bad) !important;
+  background: var(--vm-bad-soft) !important;
+  border-color: var(--vm-bad-soft) !important;
+}
+.stApp .tag.neutral {
+  color: var(--vm-muted) !important;
+  background: var(--vm-panel) !important;
+  border-color: var(--vm-line) !important;
+}
 
 /* Hide Streamlit chrome we don't need (keep "Manage app" link) */
 #MainMenu { visibility: hidden; }
