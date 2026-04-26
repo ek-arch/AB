@@ -2419,46 +2419,49 @@ def render_step1(primary_task, serp_result, config):
             full_snippet = r.get("snippet") or ""
             snippet = escape_html(full_snippet)
 
-            row_cols = st.columns([0.5, 7, 1.4, 1], vertical_alignment="center")
-            with row_cols[0]:
-                st.markdown(
-                    f'<div style="font-family: \'Fraunces\', serif; font-size: 28px; font-weight: 500; color: var(--muted); padding-top: 8px;">{i+1:02d}</div>',
-                    unsafe_allow_html=True,
-                )
-            with row_cols[1]:
-                st.markdown(
-                    f"""
-                    <div style="padding: 6px 0;">
-                      <div style="font-size: 18px; font-weight: 600; line-height: 1.3; margin-bottom: 6px;">
-                        <a href="{escape_html(link)}" target="_blank" rel="noopener" style="color: var(--text); text-decoration: none;">{title}</a>
-                      </div>
-                      <div style="font-size: 14px; margin-bottom: 8px;">
-                        <a href="{escape_html(link)}" target="_blank" rel="noopener" style="color: var(--info); text-decoration: none; word-break: break-all;">{displayed}</a>
-                      </div>
-                      {f'<div style="font-size: 16px; color: var(--text-dim); line-height: 1.55;">{snippet}</div>' if snippet else ''}
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with row_cols[2]:
-                # Status as a disabled Streamlit button: identical chrome to
-                # the hide button next to it, so heights line up perfectly.
-                st.button(
-                    cls.upper(),
-                    key=f"tag_btn_{i}_{result_key(r)[:50]}",
-                    help=f"Classification: {cls}",
-                    use_container_width=True,
-                    disabled=True,
-                )
-            with row_cols[3]:
-                if st.button("✕ hide", key=f"hide_{i}_{result_key(r)[:60]}", help="Mark as not relevant (wrong person, etc.) — hides from breakdown and saturation count"):
-                    irr = list(st.session_state.config.get("irrelevant", []))
-                    rk = result_key(r)
-                    if rk not in irr:
-                        irr.append(rk)
-                    st.session_state.config["irrelevant"] = irr
-                    save_config(st.session_state.config)
-                    st.rerun()
+            # Each result wrapped in a bordered container so rows are visibly
+            # separated, especially on mobile where columns stack.
+            with st.container(border=True):
+                row_cols = st.columns([0.5, 7, 1.4, 1], vertical_alignment="center")
+                with row_cols[0]:
+                    st.markdown(
+                        f'<div style="font-family: \'Fraunces\', serif; font-size: 28px; font-weight: 500; color: var(--muted); padding-top: 8px;">{i+1:02d}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with row_cols[1]:
+                    st.markdown(
+                        f"""
+                        <div style="padding: 6px 0;">
+                          <div style="font-size: 18px; font-weight: 600; line-height: 1.3; margin-bottom: 6px;">
+                            <a href="{escape_html(link)}" target="_blank" rel="noopener" style="color: var(--text); text-decoration: none;">{title}</a>
+                          </div>
+                          <div style="font-size: 14px; margin-bottom: 8px;">
+                            <a href="{escape_html(link)}" target="_blank" rel="noopener" style="color: var(--info); text-decoration: none; word-break: break-all;">{displayed}</a>
+                          </div>
+                          {f'<div style="font-size: 16px; color: var(--text-dim); line-height: 1.55;">{snippet}</div>' if snippet else ''}
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                with row_cols[2]:
+                    # Status as a disabled Streamlit button: identical chrome to
+                    # the hide button next to it, so heights line up perfectly.
+                    st.button(
+                        cls.upper(),
+                        key=f"tag_btn_{i}_{result_key(r)[:50]}",
+                        help=f"Classification: {cls}",
+                        use_container_width=True,
+                        disabled=True,
+                    )
+                with row_cols[3]:
+                    if st.button("✕ hide", key=f"hide_{i}_{result_key(r)[:60]}", help="Mark as not relevant (wrong person, etc.) — hides from breakdown and saturation count"):
+                        irr = list(st.session_state.config.get("irrelevant", []))
+                        rk = result_key(r)
+                        if rk not in irr:
+                            irr.append(rk)
+                        st.session_state.config["irrelevant"] = irr
+                        save_config(st.session_state.config)
+                        st.rerun()
 
     if hidden_count:
         with st.expander(f"Hidden as not relevant ({hidden_count}) — restore"):
@@ -2683,24 +2686,36 @@ def render_content_plan(config):
             unsafe_allow_html=True,
         )
 
-        # Add-content form (above the list)
-        with st.expander(f"+ Add piece to '{pillar['title']}'"):
-            with st.form(key=f"add_content_{pillar['id']}", clear_on_submit=True):
-                new_title = st.text_input("Title *", key=f"ct_title_{pillar['id']}")
-                new_outlets = st.text_input("Target outlets (comma-separated)", key=f"ct_outlets_{pillar['id']}")
-                new_keywords = st.text_input("Keywords (comma-separated)", key=f"ct_kw_{pillar['id']}")
-                new_thesis = st.text_area("Thesis (1-2 lines)", key=f"ct_thesis_{pillar['id']}", height=70)
-                if st.form_submit_button("Add piece"):
-                    if new_title.strip():
-                        custom.setdefault(f"content::{pillar['id']}", []).append({
-                            "title": new_title.strip(),
-                            "pillar": pillar["id"],
-                            "outlets": [o.strip() for o in new_outlets.split(",") if o.strip()],
-                            "keywords": [k.strip() for k in new_keywords.split(",") if k.strip()],
-                            "thesis": new_thesis.strip(),
-                        })
-                        save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
-                        st.rerun()
+        # Add-content form (button-toggle, no expander)
+        toggle_key = f"show_add_content_{pillar['id']}"
+        if toggle_key not in st.session_state:
+            st.session_state[toggle_key] = False
+        if st.button(
+            ("✕ Close add form" if st.session_state[toggle_key] else f"+ Add piece to '{pillar['title']}'"),
+            key=f"toggle_add_content_{pillar['id']}",
+            use_container_width=True,
+        ):
+            st.session_state[toggle_key] = not st.session_state[toggle_key]
+            st.rerun()
+        if st.session_state[toggle_key]:
+            with st.container(border=True):
+                with st.form(key=f"add_content_{pillar['id']}", clear_on_submit=True):
+                    new_title = st.text_input("Title *", key=f"ct_title_{pillar['id']}")
+                    new_outlets = st.text_input("Target outlets (comma-separated)", key=f"ct_outlets_{pillar['id']}")
+                    new_keywords = st.text_input("Keywords (comma-separated)", key=f"ct_kw_{pillar['id']}")
+                    new_thesis = st.text_area("Thesis (1-2 lines)", key=f"ct_thesis_{pillar['id']}", height=70)
+                    if st.form_submit_button("Add piece"):
+                        if new_title.strip():
+                            custom.setdefault(f"content::{pillar['id']}", []).append({
+                                "title": new_title.strip(),
+                                "pillar": pillar["id"],
+                                "outlets": [o.strip() for o in new_outlets.split(",") if o.strip()],
+                                "keywords": [k.strip() for k in new_keywords.split(",") if k.strip()],
+                                "thesis": new_thesis.strip(),
+                            })
+                            save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
+                            st.session_state[toggle_key] = False
+                            st.rerun()
 
         for idx, it in enumerate(items):
             row_key = f"{pillar['id']}_{idx}_{it['title'][:40]}"
@@ -2987,38 +3002,51 @@ def render_step3(serp_result, pplx_result, openai_result, config):
         else:
             items.sort(key=lambda i: (status_order[i["status"]], i["priority"], i.get("effort", 3)))
 
-        # + Add task form (rendered ABOVE the task list per user preference)
-        with st.expander(f"+ Add task to '{category['title']}'"):
-            with st.form(key=f"add_form_{cat_id}", clear_on_submit=True):
-                new_label = st.text_input("Task name *", key=f"new_label_{cat_id}")
-                col_p, col_e, col_t = st.columns([1, 1, 3])
-                with col_p:
-                    new_priority = st.selectbox("Priority", [1, 2, 3], key=f"new_prio_{cat_id}")
-                with col_e:
-                    new_effort = st.selectbox(
-                        "Effort",
-                        [1, 2, 3, 4, 5],
-                        index=2,
-                        format_func=lambda v: f"{v} · {effort_label[v]}",
-                        key=f"new_effort_{cat_id}",
-                    )
-                with col_t:
-                    new_topic = st.text_input("Topic / angle (optional)", key=f"new_topic_{cat_id}")
-                new_why = st.text_area("Why it matters (optional)", key=f"new_why_{cat_id}", height=70)
-                new_action = st.text_area("Concrete action (optional)", key=f"new_action_{cat_id}", height=70)
-                submitted = st.form_submit_button("Add task")
-                if submitted and new_label.strip():
-                    custom.setdefault(cat_id, []).append({
-                        "label": new_label.strip(),
-                        "priority": new_priority,
-                        "effort": new_effort,
-                        "topic": new_topic.strip(),
-                        "why": new_why.strip(),
-                        "action": new_action.strip(),
-                        "domains": [],
-                    })
-                    save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
-                    st.rerun()
+        # + Add task form — toggled by a real Streamlit button (no expander
+        # styling to fight; works perfectly on mobile and desktop).
+        toggle_key = f"show_add_{cat_id}"
+        if toggle_key not in st.session_state:
+            st.session_state[toggle_key] = False
+        if st.button(
+            ("✕ Close add form" if st.session_state[toggle_key] else f"+ Add task to '{category['title']}'"),
+            key=f"toggle_add_{cat_id}",
+            use_container_width=True,
+        ):
+            st.session_state[toggle_key] = not st.session_state[toggle_key]
+            st.rerun()
+        if st.session_state[toggle_key]:
+            with st.container(border=True):
+                with st.form(key=f"add_form_{cat_id}", clear_on_submit=True):
+                    new_label = st.text_input("Task name *", key=f"new_label_{cat_id}")
+                    col_p, col_e, col_t = st.columns([1, 1, 3])
+                    with col_p:
+                        new_priority = st.selectbox("Priority", [1, 2, 3], key=f"new_prio_{cat_id}")
+                    with col_e:
+                        new_effort = st.selectbox(
+                            "Effort",
+                            [1, 2, 3, 4, 5],
+                            index=2,
+                            format_func=lambda v: f"{v} · {effort_label[v]}",
+                            key=f"new_effort_{cat_id}",
+                        )
+                    with col_t:
+                        new_topic = st.text_input("Topic / angle (optional)", key=f"new_topic_{cat_id}")
+                    new_why = st.text_area("Why it matters (optional)", key=f"new_why_{cat_id}", height=70)
+                    new_action = st.text_area("Concrete action (optional)", key=f"new_action_{cat_id}", height=70)
+                    submitted = st.form_submit_button("Add task")
+                    if submitted and new_label.strip():
+                        custom.setdefault(cat_id, []).append({
+                            "label": new_label.strip(),
+                            "priority": new_priority,
+                            "effort": new_effort,
+                            "topic": new_topic.strip(),
+                            "why": new_why.strip(),
+                            "action": new_action.strip(),
+                            "domains": [],
+                        })
+                        save_tasks({"states": states, "hidden": list(hidden), "custom": custom})
+                        st.session_state[toggle_key] = False
+                        st.rerun()
 
         for idx, it in enumerate(items):
             total_counts[it["status"]] += 1
