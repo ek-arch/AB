@@ -600,116 +600,243 @@ section.main > div.block-container {
 }
 
 /* ============================================================================
-   MOBILE LAYOUT FIXES — make st.columns stack, kill horizontal overflow,
-   tame inline styles that were sized for desktop.
+   MOBILE LAYOUT — comprehensive @media (max-width: 768px)
+   Goals:
+   - All st.columns stack vertically (Streamlit's flex doesn't adapt)
+   - Inline-sized text (dashboard cards, step headers) shrinks proportionally
+   - 44px minimum touch targets (Apple HIG / WCAG)
+   - Tight horizontal padding (1rem) to keep content readable
+   - No horizontal overflow anywhere
    ============================================================================ */
 @media (max-width: 768px) {
-  /* Force every Streamlit column row to stack vertically on mobile.
-     This is the single biggest mobile UX fix — Streamlit's flex columns
-     don't adapt by default and squash text into 30-40px-wide ribbons. */
+  /* --- Layout: stack all column rows --- */
   .stApp [data-testid="stHorizontalBlock"] {
     flex-direction: column !important;
-    gap: 6px !important;
+    gap: 8px !important;
   }
   .stApp [data-testid="column"] {
     width: 100% !important;
     min-width: 0 !important;
     flex: 1 1 100% !important;
   }
+  /* Sub-row inside dashboard cards (4-col) → 2-col grid for compactness */
+  .stApp [data-testid="stHorizontalBlock"][data-testid*="HorizontalBlock"] > [data-testid="column"]:nth-child(4n+1):not(:last-child) {
+    /* keep nav button rows usable, no vertical stretching */
+  }
 
-  /* Saturation cards (3-col grid declared inline) — stack to single col */
+  /* --- Typography hierarchy on mobile --- */
+  .stApp .query-text {
+    font-size: 26px !important;
+    line-height: 1.15 !important;
+    margin-bottom: 4px !important;
+  }
+  .stApp .step-num { font-size: 20px !important; }
+  .stApp .step-title { font-size: 18px !important; }
+  .stApp .step-block {
+    margin: 20px 0 8px !important;
+    padding-top: 12px !important;
+  }
+  .stApp .step-subtitle {
+    font-size: 13px !important;
+    line-height: 1.55 !important;
+  }
+  .stApp h1 { font-size: 22px !important; }
+  .stApp h2 { font-size: 18px !important; }
+  .stApp h3 { font-size: 16px !important; }
+  .stApp p, .stApp .stMarkdown p {
+    font-size: 14px !important;
+    line-height: 1.55 !important;
+  }
+  .stApp .stCaption, .stApp [data-testid="stCaptionContainer"] {
+    font-size: 12px !important;
+  }
+
+  /* --- Saturation card (Step 01 stats grid) --- */
   .stApp .saturation-card {
     grid-template-columns: 1fr !important;
-    gap: 16px !important;
+    gap: 14px !important;
     padding: 16px !important;
   }
-  .stApp .saturation-number { font-size: 32px !important; }
+  .stApp .saturation-number { font-size: 30px !important; line-height: 1 !important; }
   .stApp .saturation-number span { font-size: 16px !important; }
-
-  /* Step block headers shrink */
-  .stApp .step-num { font-size: 22px !important; }
-  .stApp .step-title { font-size: 20px !important; }
-  .stApp .step-block { margin: 24px 0 8px !important; padding-top: 12px !important; }
-  .stApp .query-text { font-size: 24px !important; line-height: 1.15 !important; }
-  .stApp .step-subtitle { font-size: 13px !important; }
-
-  /* Result row tightening */
-  .stApp .stContainer [data-testid="stHorizontalBlock"] {
-    flex-direction: column !important;
+  .stApp .saturation-label {
+    font-size: 11px !important;
+    letter-spacing: 0.05em !important;
   }
-  /* Result title + URL: prevent overflow */
+  .stApp .legend-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .stApp .legend-count { font-size: 18px !important; }
+  .stApp .legend-label { font-size: 11px !important; }
+
+  /* --- Dashboard NOW row (4-col → 2-col) --- */
+  div[style*="grid-template-columns: repeat(4, 1fr)"] {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  div[style*="grid-template-columns: 1fr 2fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  /* Shrink dashboard card big numbers (28px/24px → 22px/18px) */
+  .stApp [data-testid="column"] div[style*="font-size:28px"],
+  .stApp [data-testid="column"] div[style*="font-size: 28px"] {
+    font-size: 22px !important;
+  }
+  .stApp [data-testid="column"] div[style*="font-size:24px"],
+  .stApp [data-testid="column"] div[style*="font-size: 24px"] {
+    font-size: 18px !important;
+  }
+  .stApp [data-testid="column"] div[style*="font-size:36px"],
+  .stApp [data-testid="column"] div[style*="font-size: 36px"] {
+    font-size: 26px !important;
+  }
+  .stApp [data-testid="column"] div[style*="font-size:18px"],
+  .stApp [data-testid="column"] div[style*="font-size: 18px"] {
+    font-size: 15px !important;
+  }
+  .stApp [data-testid="column"] div[style*="font-size:16px"],
+  .stApp [data-testid="column"] div[style*="font-size: 16px"] {
+    font-size: 14px !important;
+  }
+  .stApp [data-testid="column"] div[style*="font-size:14px"],
+  .stApp [data-testid="column"] div[style*="font-size: 14px"] {
+    font-size: 13px !important;
+  }
+  /* Card eyebrow uppercase labels */
+  .stApp [data-testid="column"] div[style*="text-transform:uppercase"],
+  .stApp [data-testid="column"] div[style*="text-transform: uppercase"] {
+    font-size: 10px !important;
+    letter-spacing: 0.06em !important;
+  }
+  /* Card padding tightens */
+  .stApp [data-testid="column"] div[style*="border:1px solid"],
+  .stApp [data-testid="column"] div[style*="border: 1px solid"] {
+    padding: 12px 14px !important;
+  }
+
+  /* --- Buttons: 44px touch target, full width inside columns --- */
+  .stApp .stButton > button {
+    width: 100% !important;
+    font-size: 14px !important;
+    min-height: 44px !important;
+    height: auto !important;
+    padding: 10px 14px !important;
+    line-height: 1.2 !important;
+    white-space: normal !important;  /* allow wrap, no clipping */
+  }
+  .stApp .stButton > button:disabled {
+    font-size: 11px !important;
+    min-height: 36px !important;
+    letter-spacing: 0.04em !important;
+  }
+  /* Primary button slightly bigger */
+  .stApp .stButton > button[kind="primary"] {
+    min-height: 48px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+  }
+
+  /* --- Forms: bigger touch areas, no zoom on focus (iOS) --- */
+  .stApp .stTextInput input,
+  .stApp .stTextArea textarea,
+  .stApp .stSelectbox div[data-baseweb="select"] > div,
+  .stApp .stSelectbox div[data-baseweb="select"] input {
+    font-size: 16px !important;  /* iOS won't zoom if >=16px */
+    min-height: 44px !important;
+  }
+  .stApp .stTextArea textarea { min-height: 80px !important; }
+  .stApp label, .stApp .stWidgetLabel {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+  }
+
+  /* --- Radio nav (filters in step 3/4): wrap, larger touch chips --- */
+  .stApp [data-testid="stRadio"] > div {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .stApp [data-testid="stRadio"] > div > label {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+    min-height: 36px !important;
+  }
+
+  /* --- Result rows: links wrap, snippets don't overflow --- */
   .stApp [data-testid="column"] a {
     word-break: break-word !important;
     overflow-wrap: anywhere !important;
   }
-  .stApp [data-testid="column"] div[style*="font-size: 18px"],
-  .stApp [data-testid="column"] div[style*="font-size: 36px"] {
-    font-size: 16px !important;
-    line-height: 1.3 !important;
-  }
-  .stApp [data-testid="column"] div[style*="font-size: 16px"] {
-    font-size: 14px !important;
-  }
-  .stApp [data-testid="column"] div[style*="font-size: 14px"] {
-    font-size: 12px !important;
-  }
-  .stApp [data-testid="column"] div[style*="font-size: 28px"] {
-    font-size: 22px !important;
-  }
-  .stApp [data-testid="column"] div[style*="font-size: 24px"] {
-    font-size: 20px !important;
+  .stApp [data-testid="column"] div[style*="word-break"] {
+    font-size: 13px !important;
   }
 
-  /* Buttons full width on mobile so they don't sit half-empty next to nothing */
-  .stApp .stButton > button {
-    width: 100% !important;
-    font-size: 14px !important;
-  }
-  .stApp .stButton > button:disabled {
-    font-size: 12px !important;  /* status pill */
+  /* --- Container/card padding tightens --- */
+  .stApp [data-testid="stVerticalBlockBorderWrapper"],
+  .stApp [data-testid="stContainer"] {
+    padding: 10px !important;
   }
 
-  /* Tables / dataframes scroll horizontally instead of breaking layout */
+  /* --- Expander: bigger touch summary, padded body --- */
+  .stApp [data-testid="stExpander"] details > summary {
+    min-height: 48px !important;
+    padding: 14px 16px !important;
+    font-size: 14px !important;
+  }
+  .stApp [data-testid="stExpander"] details > div {
+    padding: 14px !important;
+  }
+
+  /* --- LLM answer card on mobile --- */
+  .stApp .llm-answer { padding: 12px 14px !important; margin-bottom: 12px !important; }
+  .stApp .llm-answer-text { font-size: 13px !important; }
+
+  /* --- KG card on mobile (Step 01) --- */
+  .stApp .kg-card {
+    padding: 14px 16px !important;
+    margin-bottom: 14px !important;
+  }
+  .stApp .kg-card::before { display: none !important; }  /* "KNOWLEDGE GRAPH" overlay would clip */
+  .stApp .kg-title { font-size: 16px !important; }
+  .stApp .kg-desc { font-size: 13px !important; line-height: 1.55 !important; }
+
+  /* --- Sidebar content: comfortable touch sizes --- */
+  section[data-testid="stSidebar"] .brand-mark { font-size: 18px !important; }
+  section[data-testid="stSidebar"] .brand-tag { font-size: 11px !important; }
+  section[data-testid="stSidebar"] [data-testid="stRadio"] > div > label {
+    min-height: 44px !important;
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+  }
+
+  /* --- Tables / dataframes scroll horizontally --- */
   .stApp [data-testid="stTable"], .stApp [data-testid="stDataFrame"] {
     overflow-x: auto !important;
     max-width: 100% !important;
   }
 
-  /* Container with border (st.container(border=True)) — tighter padding */
-  .stApp [data-testid="stContainer"][class*="border"],
-  .stApp .stContainer {
-    padding: 10px !important;
+  /* --- Status pill (.tag) more readable --- */
+  .stApp .tag {
+    font-size: 11px !important;
+    padding: 4px 10px !important;
+    height: auto !important;
+    min-height: 28px !important;
   }
+}
 
-  /* Form inputs full width, readable */
-  .stApp .stTextInput input,
-  .stApp .stTextArea textarea,
-  .stApp .stSelectbox div[data-baseweb="select"] {
-    font-size: 14px !important;
+/* ============================================================================
+   EXTRA-NARROW (under 480px, e.g. iPhone SE portrait)
+   ============================================================================ */
+@media (max-width: 480px) {
+  /* Dashboard NOW row: 4 cards stack 1-per-row */
+  div[style*="grid-template-columns: repeat(4, 1fr)"] {
+    grid-template-columns: 1fr !important;
   }
-  .stApp label {
-    font-size: 12px !important;
+  .stApp .query-text { font-size: 22px !important; }
+  .stApp .step-num { font-size: 18px !important; }
+  .stApp .step-title { font-size: 16px !important; }
+  section.main > div.block-container {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
   }
-
-  /* Radio nav (sub-filters in step 3 / 4) wraps cleanly on narrow screens */
-  .stApp [data-testid="stRadio"] > div {
-    flex-wrap: wrap !important;
-  }
-  .stApp [data-testid="stRadio"] > div > label {
-    font-size: 12px !important;
-    padding: 4px 8px !important;
-  }
-
-  /* Knowledge-graph and other full-width info cards */
-  .stApp .kg-card {
-    padding: 14px 16px !important;
-    margin-bottom: 16px !important;
-  }
-  .stApp .kg-title { font-size: 16px !important; }
-  .stApp .kg-desc { font-size: 13px !important; }
-
-  /* Body text legibility */
-  .stApp p, .stApp .stMarkdown p { font-size: 14px !important; line-height: 1.55 !important; }
 }
 
 /* ---------- Headings ---------- */
