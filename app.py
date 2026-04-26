@@ -2383,10 +2383,10 @@ def render_step1(primary_task, serp_result, config):
     pages_fetched = serp_result.get("_pages_fetched", 3)
     page_counts = serp_result.get("_page_counts") or []
     page_errors = serp_result.get("_page_errors") or []
-    expander_title = f"All results · {len(organic)} visible"
+    # Compact label that reads cleanly on mobile (no chained parentheses)
+    expander_title = f"Results · {len(organic)} shown"
     if hidden_count:
-        expander_title += f" ({hidden_count} hidden as not relevant)"
-    expander_title += f" across {pages_fetched} page{'s' if pages_fetched != 1 else ''}"
+        expander_title += f" · {hidden_count} hidden"
 
     # Per-page diagnostics — visible above the result list so you can spot
     # SerpAPI hiccups (e.g. Google has fewer than 30 results for the name).
@@ -2399,8 +2399,10 @@ def render_step1(primary_task, serp_result, config):
             else:
                 diag_parts.append(f"call {i}: <strong>{cnt}</strong>")
         st.markdown(
-            f'<div style="font-size:12px; color:var(--vm-muted); margin: 4px 0 8px;">'
-            f'SerpAPI: {" · ".join(diag_parts)} · {len(organic)} unique after dedupe'
+            f'<div style="font-size:12px; color:var(--vm-muted); margin: 4px 0 8px; line-height:1.5;">'
+            f'{pages_fetched} page{"s" if pages_fetched != 1 else ""} fetched · '
+            f'{" · ".join(diag_parts)} · '
+            f'{len(organic)} unique'
             f'</div>',
             unsafe_allow_html=True,
         )
