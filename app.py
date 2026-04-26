@@ -642,6 +642,7 @@ TASKS_FILE = Path("tasks.json")
 
 DEFAULT_OWNED = [
     "bruiaka.com",
+    "andriibruiaka.com",
     "andrewbruiaka.substack.com",
     "andrewbruiaka",
     "andriibruiaka",
@@ -1154,8 +1155,9 @@ ACTION_CATEGORIES = [
                 "label": "andriibruiaka.com — confirm ownership + add to Owned Domains",
                 "priority": 1,
                 "effort": 1,
+                "default_status": "done",
                 "why": "Perplexity already cites it. Make sure it's officially owned and counted in this dashboard's saturation score.",
-                "action": "Settings → Owned Domains → add 'andriibruiaka.com'. Save. (5 seconds inside this app.)",
+                "action": "✅ Added to DEFAULT_OWNED (and substring 'andriibruiaka' was already matching). Saturation now counts it as owned.",
                 "domains": ["andriibruiaka.com"],
             },
             {
