@@ -687,6 +687,7 @@ def load_config():
     config = {
         "api_key": "",
         "perplexity_key": "",
+        "openai_key": "",
         "owned_domains": DEFAULT_OWNED.copy(),
         "earned_domains": DEFAULT_EARNED.copy(),
         "negative_domains": ["fintelegram.com"],
@@ -709,6 +710,11 @@ def load_config():
     try:
         if not config["perplexity_key"] and "perplexity_key" in st.secrets:
             config["perplexity_key"] = st.secrets["perplexity_key"]
+    except Exception:
+        pass
+    try:
+        if not config["openai_key"] and "openai_key" in st.secrets:
+            config["openai_key"] = st.secrets["openai_key"]
     except Exception:
         pass
     return config
@@ -849,6 +855,47 @@ def parse_perplexity(data):
         elif isinstance(c, dict):
             citation_urls.append(c.get("url") or c.get("link") or "")
     citation_urls = [u for u in citation_urls if u]
+    return answer, citation_urls
+
+
+OPENAI_PROBE = PERPLEXITY_PROBE
+
+
+def call_openai(query, api_key, timeout=60):
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    payload = {
+        "model": "gpt-4o-search-preview",
+        "web_search_options": {},
+        "messages": [{"role": "user", "content": query}],
+    }
+    resp = requests.post(
+        "https://api.openai.com/v1/chat/completions",
+        json=payload,
+        headers=headers,
+        timeout=timeout,
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:200]}")
+    return resp.json()
+
+
+def parse_openai(data):
+    """Extract answer + citation URLs from OpenAI web-search response."""
+    msg = (data.get("choices") or [{}])[0].get("message") or {}
+    answer = msg.get("content", "") or ""
+    urls = []
+    for ann in (msg.get("annotations") or []):
+        if ann.get("type") == "url_citation":
+            url = (ann.get("url_citation") or {}).get("url")
+            if url:
+                urls.append(url)
+    # Dedupe preserving order
+    seen = set()
+    citation_urls = []
+    for u in urls:
+        if u not in seen:
+            seen.add(u)
+            citation_urls.append(u)
     return answer, citation_urls
 
 
@@ -1180,6 +1227,10 @@ if "perplexity_result" not in st.session_state:
     st.session_state.perplexity_result = None
 if "perplexity_status" not in st.session_state:
     st.session_state.perplexity_status = "idle"
+if "openai_result" not in st.session_state:
+    st.session_state.openai_result = None
+if "openai_status" not in st.session_state:
+    st.session_state.openai_status = "idle"
 
 all_tasks = TASKS + st.session_state.custom_tasks
 
@@ -1205,6 +1256,22 @@ def run_perplexity():
     except Exception as e:
         st.session_state.perplexity_status = "error"
         st.session_state.perplexity_result = {"error": str(e)}
+
+
+def run_openai():
+    key = st.session_state.config.get("openai_key")
+    if not key:
+        st.session_state.openai_status = "error"
+        st.session_state.openai_result = {"error": "No OpenAI key configured"}
+        return
+    try:
+        st.session_state.openai_status = "running"
+        data = call_openai(OPENAI_PROBE, key)
+        st.session_state.openai_result = data
+        st.session_state.openai_status = "ok"
+    except Exception as e:
+        st.session_state.openai_status = "error"
+        st.session_state.openai_result = {"error": str(e)}
 
 
 def run_single(task):
@@ -1251,6 +1318,12 @@ with st.sidebar:
             type="password",
             help="Get one at perplexity.ai/settings/api. Used for the LLM visibility check.",
         )
+        openai_input = st.text_input(
+            "OpenAI Key (optional)",
+            value=st.session_state.config.get("openai_key", ""),
+            type="password",
+            help="Get one at platform.openai.com/api-keys. Used for the ChatGPT (web search) visibility check.",
+        )
         owned_input = st.text_area(
             "Owned Domains (one per line)",
             value="\n".join(st.session_state.config["owned_domains"]),
@@ -1272,6 +1345,7 @@ with st.sidebar:
         if st.button("Save Settings", use_container_width=True):
             st.session_state.config["api_key"] = api_input.strip()
             st.session_state.config["perplexity_key"] = pplx_input.strip()
+            st.session_state.config["openai_key"] = openai_input.strip()
             st.session_state.config["owned_domains"] = [
                 l.strip() for l in owned_input.split("\n") if l.strip()
             ]
@@ -1432,7 +1506,7 @@ def render_strategy():
             cls = classify(r, st.session_state.config)
             title = escape_html(r.get("title") or "Untitled")
             link = r.get("link") or ""
-            displayed = escape_html(r.get("displayed_link") or link)
+            displayed = escape_html(link or r.get("displayed_link") or "")
             full_snippet = r.get("snippet") or ""
             snippet = escape_html(full_snippet)
 
@@ -1446,7 +1520,9 @@ def render_strategy():
                 st.markdown(
                     f"""
                     <div style="padding: 6px 0;">
-                      <div style="font-size: 18px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 6px;">{title}</div>
+                      <div style="font-size: 18px; font-weight: 600; line-height: 1.3; margin-bottom: 6px;">
+                        <a href="{escape_html(link)}" target="_blank" rel="noopener" style="color: var(--text); text-decoration: none;">{title}</a>
+                      </div>
                       <div style="font-size: 14px; margin-bottom: 8px;">
                         <a href="{escape_html(link)}" target="_blank" rel="noopener" style="color: var(--info); text-decoration: none; word-break: break-all;">{displayed}</a>
                       </div>
@@ -1501,12 +1577,26 @@ def render_strategy():
         unsafe_allow_html=True,
     )
 
-    if has_pplx:
-        if st.button("▶ Refresh Perplexity probe", use_container_width=True):
-            run_perplexity()
-            st.rerun()
-    else:
-        st.caption("Add Perplexity key in Settings (or Streamlit Secrets) to enable LLM probe.")
+    has_openai = bool(st.session_state.config.get("openai_key"))
+    openai_result = st.session_state.openai_result
+
+    btn_cols = st.columns(2)
+    with btn_cols[0]:
+        if has_pplx:
+            if st.button("▶ Refresh Perplexity probe", use_container_width=True):
+                run_perplexity()
+                st.rerun()
+        else:
+            st.caption("Add Perplexity key in Settings to enable.")
+    with btn_cols[1]:
+        if has_openai:
+            if st.button("▶ Refresh ChatGPT probe", use_container_width=True):
+                run_openai()
+                st.rerun()
+        else:
+            st.caption("Add OpenAI key in Settings to enable.")
+
+    owned = st.session_state.config.get("owned_domains", [])
 
     pplx_mentioned = False
     pplx_owned_cited = 0
@@ -1515,7 +1605,6 @@ def render_strategy():
     if pplx_result and "error" not in pplx_result:
         pplx_answer, pplx_citations = parse_perplexity(pplx_result)
         pplx_mentioned = "bruiaka" in pplx_answer.lower()
-        owned = st.session_state.config.get("owned_domains", [])
         for url in pplx_citations:
             ul = url.lower()
             if any(d.lower() in ul for d in owned if d):
@@ -1533,6 +1622,30 @@ def render_strategy():
     else:
         pplx_status = ("not mentioned", "var(--bad)")
 
+    openai_mentioned = False
+    openai_owned_cited = 0
+    openai_answer = ""
+    openai_citations = []
+    if openai_result and "error" not in openai_result:
+        openai_answer, openai_citations = parse_openai(openai_result)
+        openai_mentioned = "bruiaka" in openai_answer.lower()
+        for url in openai_citations:
+            ul = url.lower()
+            if any(d.lower() in ul for d in owned if d):
+                openai_owned_cited += 1
+
+    if openai_result is None:
+        openai_status = ("not run", "var(--muted)")
+    elif "error" in (openai_result or {}):
+        openai_status = ("error", "var(--bad)")
+    elif openai_mentioned:
+        openai_status = (
+            f"mentioned · {openai_owned_cited} owned cited",
+            "var(--good)" if openai_owned_cited else "var(--warn)",
+        )
+    else:
+        openai_status = ("not mentioned", "var(--bad)")
+
     st.markdown(
         f"""
         <div class="saturation-card" style="grid-template-columns: 1fr 1fr; gap: 32px;">
@@ -1542,9 +1655,9 @@ def render_strategy():
             <div class="saturation-label">probe: "Who is Andrii Bruiaka?"</div>
           </div>
           <div>
-            <div class="saturation-label">ChatGPT · Claude · Gemini</div>
-            <div class="saturation-number" style="font-size: 28px; color: var(--muted);">not yet wired</div>
-            <div class="saturation-label">add OpenAI / Anthropic / Google keys to extend</div>
+            <div class="saturation-label">ChatGPT (gpt-4o-search-preview)</div>
+            <div class="saturation-number" style="font-size: 36px; color: {openai_status[1]};">{openai_status[0]}</div>
+            <div class="saturation-label">probe: "Who is Andrii Bruiaka?"</div>
           </div>
         </div>
         """,
@@ -1561,14 +1674,31 @@ def render_strategy():
                 st.markdown("**Citations**")
                 for i, url in enumerate(pplx_citations, 1):
                     is_owned = any(
-                        d.lower() in url.lower()
-                        for d in st.session_state.config.get("owned_domains", [])
-                        if d
+                        d.lower() in url.lower() for d in owned if d
                     )
                     tag = " · **OWNED**" if is_owned else ""
                     st.markdown(f"{i}. [{url}]({url}){tag}")
     elif pplx_result and "error" in pplx_result:
         st.error(f"Perplexity: {pplx_result['error']}")
+
+    if openai_result and "error" not in openai_result:
+        with st.expander(f"What ChatGPT says · {len(openai_citations)} citations", expanded=True):
+            st.markdown(
+                f'<div class="kg-card"><div class="kg-desc">{escape_html(openai_answer)}</div></div>',
+                unsafe_allow_html=True,
+            )
+            if openai_citations:
+                st.markdown("**Citations**")
+                for i, url in enumerate(openai_citations, 1):
+                    is_owned = any(
+                        d.lower() in url.lower() for d in owned if d
+                    )
+                    tag = " · **OWNED**" if is_owned else ""
+                    st.markdown(f"{i}. [{url}]({url}){tag}")
+    elif openai_result and "error" in openai_result:
+        st.error(f"ChatGPT: {openai_result['error']}")
+
+    all_citations = pplx_citations + openai_citations
 
     # ============================================================
     # STEP 3 — Action plan
@@ -1583,7 +1713,7 @@ def render_strategy():
     )
 
     serp_urls = " ".join((r.get("link") or "").lower() for r in organic)
-    citation_urls = " ".join((c or "").lower() for c in pplx_citations)
+    citation_urls = " ".join((c or "").lower() for c in all_citations)
 
     doc = load_tasks()
     states = doc["states"]
