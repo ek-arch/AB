@@ -288,61 +288,106 @@ html, body, .stApp { color: var(--vm-body); }
   border-color: var(--vm-blue-deep) !important;
 }
 
-/* ---------- Expander header — readable label, real chevron ---------- */
-.stApp .streamlit-expanderHeader,
-.stApp [data-testid="stExpander"] summary,
-.stApp [data-testid="stExpander"] details > summary,
-.stApp [data-testid="stExpander"] details > summary *,
-.stApp [data-testid="stExpander"] [data-testid="stExpanderToggleIcon"] + *,
-.stApp [data-testid="stExpander"] details > summary > span {
-  font-family: var(--vm-font) !important;
-  text-transform: none !important;
-  letter-spacing: -0.005em !important;
-  color: var(--vm-ink) !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  background: transparent !important;
-  -webkit-text-fill-color: var(--vm-ink) !important;
-}
+/* ============================================================================
+   EXPANDER — readable header, ASCII chevron, hard-overrides for mobile Safari
+   ============================================================================ */
 
-/* The expander box itself: subtle border + light fill so the header is visible */
+/* Wrapper card */
 .stApp [data-testid="stExpander"] {
   border: 1px solid var(--vm-line) !important;
   border-radius: 10px !important;
   background: var(--vm-panel) !important;
-  margin: 8px 0 !important;
+  margin: 10px 0 !important;
+  overflow: hidden !important;
 }
-.stApp [data-testid="stExpander"] details > summary {
+
+/* Summary (the clickable header). Use display:flex for clean alignment of
+   chevron + text. */
+.stApp [data-testid="stExpander"] details > summary,
+.stApp .streamlit-expanderHeader {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
   padding: 12px 14px !important;
   background: var(--vm-panel) !important;
   border-radius: 10px !important;
+  cursor: pointer !important;
+  list-style: none !important;
+  min-height: 44px !important;
 }
 .stApp [data-testid="stExpander"] details[open] > summary {
   background: var(--vm-panel-blue) !important;
   border-bottom: 1px solid var(--vm-line) !important;
   border-radius: 10px 10px 0 0 !important;
 }
+
+/* Hide the default Streamlit chevron icon (which leaks Material text on
+   networks where the icon font fails). We render our own. */
+.stApp [data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"],
+.stApp [data-testid="stExpander"] summary svg,
+.stApp [data-testid="stExpander"] summary::-webkit-details-marker {
+  display: none !important;
+}
+
+/* Custom chevron rendered via pseudo-element on the summary itself.
+   Always uses normal sans-serif so it works without an icon font. */
+.stApp [data-testid="stExpander"] details > summary::before {
+  content: "▸" !important;
+  display: inline-block !important;
+  width: 14px !important;
+  font-family: var(--vm-font) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: var(--vm-blue) !important;
+  -webkit-text-fill-color: var(--vm-blue) !important;
+  transition: transform 150ms ease !important;
+  line-height: 1 !important;
+}
+.stApp [data-testid="stExpander"] details[open] > summary::before {
+  transform: rotate(90deg) !important;
+}
+
+/* All text inside the summary — nuclear-override color and size so mobile
+   Safari can't make it transparent or zero-sized. */
+.stApp [data-testid="stExpander"] details > summary,
+.stApp [data-testid="stExpander"] details > summary *,
+.stApp [data-testid="stExpander"] details > summary p,
+.stApp [data-testid="stExpander"] details > summary span,
+.stApp [data-testid="stExpander"] details > summary div,
+.stApp [data-testid="stExpander"] details > summary [data-testid] {
+  font-family: var(--vm-font) !important;
+  text-transform: none !important;
+  letter-spacing: -0.005em !important;
+  color: var(--vm-ink) !important;
+  -webkit-text-fill-color: var(--vm-ink) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+  line-height: 1.3 !important;
+  text-shadow: none !important;
+}
+
+/* Body of the expander */
 .stApp [data-testid="stExpander"] details > div {
-  padding: 12px 14px !important;
+  padding: 14px !important;
   background: #fff !important;
   border-radius: 0 0 10px 10px !important;
 }
 
-/* Chevron always visible (even if the icon font failed to load, use ASCII fallback) */
-.stApp [data-testid="stExpander"] details > summary [data-testid="stExpanderToggleIcon"]::before {
-  content: "▸";
-  display: inline-block;
-  margin-right: 8px;
-  color: var(--vm-blue);
-  transition: transform 120ms;
-}
-.stApp [data-testid="stExpander"] details[open] > summary [data-testid="stExpanderToggleIcon"]::before {
-  transform: rotate(90deg);
-}
-.stApp [data-testid="stExpander"] details > summary [data-testid="stExpanderToggleIcon"] {
-  font-size: 0 !important;  /* hide the broken material text */
-  width: auto !important;
-  height: auto !important;
+/* On mobile, give the summary more touch height + larger text */
+@media (max-width: 768px) {
+  .stApp [data-testid="stExpander"] details > summary {
+    min-height: 48px !important;
+    padding: 14px 16px !important;
+  }
+  .stApp [data-testid="stExpander"] details > summary,
+  .stApp [data-testid="stExpander"] details > summary * {
+    font-size: 15px !important;
+    line-height: 1.35 !important;
+  }
+  .stApp [data-testid="stExpander"] details > summary::before {
+    font-size: 18px !important;
+  }
 }
 
 /* ---------- Drop the giant uppercase tracked labels everywhere ---------- */
