@@ -1702,21 +1702,15 @@ CONTENT_PLAN = [
 # ============================================================
 EFFORT_LABELS = {1: "5–30 min", 2: "<2 h", 3: "½ day", 4: "multi-day", 5: "ongoing/weeks"}
 
-# Hardcoded baseline shown to first-time visitors before any live audit runs.
-# Reflects last manually-validated audit. Update here when the picture changes.
+# Last-known snapshot shown when no live audit has been run yet.
+# Update these when reality changes meaningfully.
 DASHBOARD_BASELINE = {
-    "page1_aligned": 7,
+    "page1_aligned": 7,           # owned + earned in top 10
     "page1_total": 10,
-    "page1_state": "good",        # good / warn / bad
-    "page1_text": "strong",
-    "kg_present": False,
-    "negatives": 3,
-    "llm_mentions": 1,
-    "llm_runs": 1,
-    "llm_text": "1/1",
-    "llm_state": "good",
-    "llm_sub": "mentioned (baseline · Perplexity)",
-    "as_of": "audit baseline · 2026-04",
+    "kg_present": False,           # is there a Google Knowledge Graph entity card?
+    "negatives": 3,                # negative URLs in top 30
+    "llm_owned_cited": 1,          # how many of your owned domains are cited in LLM answers
+    "snapshot_label": "snapshot · April 2026",
 }
 
 
@@ -1763,16 +1757,19 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
                 negatives += 1
         kg_present = bool(serp_result.get("knowledge_graph"))
 
-    def llm_mentioned(result, parser):
+    # Count how many of your owned domains are cited by LLMs (the real GEO signal)
+    owned_list = [d for d in (config.get("owned_domains") or []) if d]
+    llm_owned_cited = 0
+    llm_runs = 0
+    for result, parser in [(pplx_result, parse_perplexity), (openai_result, parse_openai)]:
         if not result or "error" in result:
-            return None  # not run / errored
-        ans, _ = parser(result)
-        return "bruiaka" in (ans or "").lower()
-
-    pplx_state = llm_mentioned(pplx_result, parse_perplexity)
-    openai_state = llm_mentioned(openai_result, parse_openai)
-    llm_runs = sum(1 for s in (pplx_state, openai_state) if s is not None)
-    llm_mentions = sum(1 for s in (pplx_state, openai_state) if s is True)
+            continue
+        llm_runs += 1
+        _, citations = parser(result)
+        for url in citations:
+            ul = (url or "").lower()
+            if any(d.lower() in ul for d in owned_list):
+                llm_owned_cited += 1
 
     # ---- Compute Activity from task store ----
     doc = load_tasks()
@@ -1824,79 +1821,79 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
     def kpi_color(state):
         return {"good": "var(--vm-green)", "warn": "#8c4500", "bad": "var(--vm-bad)", "muted": "var(--vm-muted)"}[state]
 
-    # Page 1 saturation
+    # If nothing's been run yet, fall back to the saved snapshot
+    is_live = audit_run
     if not audit_run:
         page1_aligned = DASHBOARD_BASELINE["page1_aligned"]
         page1_total = DASHBOARD_BASELINE["page1_total"]
-        page1_state = DASHBOARD_BASELINE["page1_state"]
-        page1_text = DASHBOARD_BASELINE["page1_text"] + " · baseline"
-    elif page1_aligned >= 7:
-        page1_state, page1_text = "good", "strong"
+        kg_present = DASHBOARD_BASELINE["kg_present"]
+        negatives = DASHBOARD_BASELINE["negatives"]
+    if llm_runs == 0:
+        llm_owned_cited = DASHBOARD_BASELINE["llm_owned_cited"]
+
+    # Page 1 saturation: owned/earned share of top 10
+    if page1_aligned >= 7:
+        page1_state, page1_text = "good", "strong control"
     elif page1_aligned >= 4:
         page1_state, page1_text = "warn", "moderate"
     else:
         page1_state, page1_text = "bad", "weak"
+    page1_caption = "How many of Google's first 10 results you own or earn"
 
     # Knowledge graph
-    if not audit_run:
-        kg_present = DASHBOARD_BASELINE["kg_present"]
-        kg_state, kg_text = ("good", "present · baseline") if kg_present else ("bad", "missing · baseline")
-    else:
-        kg_state, kg_text = ("good", "present") if kg_present else ("bad", "missing")
+    kg_state, kg_text = ("good", "present") if kg_present else ("bad", "missing")
+    kg_caption = "Google's entity card — biggest single AI-search signal"
 
-    # LLM mentions
-    if llm_runs == 0:
-        llm_mentions = DASHBOARD_BASELINE["llm_mentions"]
-        llm_runs = DASHBOARD_BASELINE["llm_runs"]
-        llm_state = DASHBOARD_BASELINE["llm_state"]
-        llm_text = DASHBOARD_BASELINE["llm_text"]
-        llm_sub = DASHBOARD_BASELINE["llm_sub"]
-    elif llm_mentions == llm_runs:
-        llm_state, llm_text, llm_sub = "good", f"{llm_mentions}/{llm_runs}", "mentioned across all probes"
-    elif llm_mentions > 0:
-        llm_state, llm_text, llm_sub = "warn", f"{llm_mentions}/{llm_runs}", "partial mention"
+    # LLM source citations: how many of your owned domains AI tools cite
+    if llm_owned_cited >= 2:
+        llm_state, llm_text, llm_sub = "good", str(llm_owned_cited), "your sources are being cited"
+    elif llm_owned_cited == 1:
+        llm_state, llm_text, llm_sub = "warn", "1", "only one source cited — broaden footprint"
     else:
-        llm_state, llm_text, llm_sub = "bad", f"0/{llm_runs}", "not mentioned"
+        llm_state, llm_text, llm_sub = "bad", "0", "AI tools cite outside sources, not yours"
 
     # Negative results
-    if not audit_run:
-        negatives = DASHBOARD_BASELINE["negatives"]
-        neg_state = "bad" if negatives > 0 else "good"
-        neg_text = f"{negatives} · baseline"
-    elif negatives == 0:
-        neg_state, neg_text = "good", "0"
+    if negatives == 0:
+        neg_state, neg_text, neg_sub = "good", "0", "clean top 30"
+    elif negatives <= 2:
+        neg_state, neg_text, neg_sub = "warn", str(negatives), "watch — limited blast"
     else:
-        neg_state, neg_text = "bad", str(negatives)
+        neg_state, neg_text, neg_sub = "bad", str(negatives), "needs displacement work"
 
     # ---- Render: NOW row ----
+    freshness = "live · just refreshed" if is_live else f"{DASHBOARD_BASELINE['snapshot_label']} · run audits to refresh"
     st.markdown(
         f"""
         <div style="display:flex; align-items:baseline; gap:12px; margin: 4px 0 12px;">
           <div style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--vm-muted); font-weight:600;">Now</div>
+          <div style="font-size:11px; color:var(--vm-faint);">{escape_html(freshness)}</div>
           <div style="height:1px; background:var(--vm-line); flex:1;"></div>
         </div>
         <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:24px;">
           <div style="border:1px solid var(--vm-line); border-radius:10px; padding:14px 16px; background:#fff;">
-            <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:4px;">Page 1 saturation</div>
+            <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:4px;">Page 1 control</div>
             <div style="font-size:28px; font-weight:600; color:{kpi_color(page1_state)}; line-height:1; letter-spacing:-0.02em;">
               {page1_aligned}<span style="font-size:16px; color:var(--vm-faint); font-weight:500;">/{page1_total}</span>
             </div>
             <div style="font-size:12px; color:{kpi_color(page1_state)}; margin-top:6px; font-weight:500;">{page1_text}</div>
+            <div style="font-size:11px; color:var(--vm-muted); margin-top:4px; line-height:1.35;">{page1_caption}</div>
           </div>
           <div style="border:1px solid var(--vm-line); border-radius:10px; padding:14px 16px; background:#fff;">
             <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:4px;">Knowledge graph</div>
             <div style="font-size:24px; font-weight:600; color:{kpi_color(kg_state)}; line-height:1.05; letter-spacing:-0.02em;">{kg_text}</div>
-            <div style="font-size:12px; color:var(--vm-muted); margin-top:6px;">Google entity card</div>
+            <div style="font-size:11px; color:var(--vm-muted); margin-top:6px; line-height:1.35;">{kg_caption}</div>
           </div>
           <div style="border:1px solid var(--vm-line); border-radius:10px; padding:14px 16px; background:#fff;">
-            <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:4px;">LLM mentions</div>
-            <div style="font-size:24px; font-weight:600; color:{kpi_color(llm_state)}; line-height:1.05; letter-spacing:-0.02em;">{llm_text}</div>
-            <div style="font-size:12px; color:var(--vm-muted); margin-top:6px;">{llm_sub}</div>
+            <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:4px;">AI source citations</div>
+            <div style="font-size:28px; font-weight:600; color:{kpi_color(llm_state)}; line-height:1; letter-spacing:-0.02em;">{llm_text}</div>
+            <div style="font-size:12px; color:{kpi_color(llm_state)}; margin-top:6px; font-weight:500;">{llm_sub}</div>
+            <div style="font-size:11px; color:var(--vm-muted); margin-top:4px; line-height:1.35;">Owned URLs cited by ChatGPT / Perplexity when explaining who you are</div>
           </div>
           <div style="border:1px solid var(--vm-line); border-radius:10px; padding:14px 16px; background:#fff;">
             <div style="font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--vm-muted); margin-bottom:4px;">Negative results</div>
             <div style="font-size:28px; font-weight:600; color:{kpi_color(neg_state)}; line-height:1; letter-spacing:-0.02em;">{neg_text}</div>
-            <div style="font-size:12px; color:var(--vm-muted); margin-top:6px;">in top 30</div>
+            <div style="font-size:12px; color:{kpi_color(neg_state)}; margin-top:6px; font-weight:500;">{neg_sub}</div>
+            <div style="font-size:11px; color:var(--vm-muted); margin-top:4px; line-height:1.35;">Hit pieces or unflattering pages in top 30</div>
           </div>
         </div>
         """,

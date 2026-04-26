@@ -172,7 +172,41 @@ html, body, .stApp { color: var(--vm-body); }
   font-weight: 500 !important;
   border-radius: 8px !important;
   text-align: center !important;
-  padding: 0.55rem 0.9rem !important;
+  padding: 0 0.9rem !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+}
+
+/* Tags / status pills — match the button height so a row of buttons + pill aligns. */
+.stApp .tag {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 0.9rem !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  letter-spacing: -0.005em !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  border: 1px solid transparent !important;
+  white-space: nowrap !important;
+}
+
+/* Tighten Streamlit column gaps so buttons sit on consistent spacing */
+.stApp [data-testid="stHorizontalBlock"] {
+  gap: 8px !important;
+}
+.stApp [data-testid="column"] {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
 }
 .stApp .stButton > button[kind="primary"] {
   background: var(--vm-blue) !important;
