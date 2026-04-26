@@ -822,6 +822,12 @@ section.main > div.block-container {
   }
 }
 
+/* Hide the effort dots on mobile — too visually heavy in narrow layouts.
+   The text label ("5–30 min" / "<2 h" / etc.) carries the same info. */
+@media (max-width: 768px) {
+  .stApp .effort-dots { display: none !important; }
+}
+
 /* ============================================================================
    EXTRA-NARROW (under 480px, e.g. iPhone SE portrait)
    ============================================================================ */
