@@ -1702,6 +1702,23 @@ CONTENT_PLAN = [
 # ============================================================
 EFFORT_LABELS = {1: "5–30 min", 2: "<2 h", 3: "½ day", 4: "multi-day", 5: "ongoing/weeks"}
 
+# Hardcoded baseline shown to first-time visitors before any live audit runs.
+# Reflects last manually-validated audit. Update here when the picture changes.
+DASHBOARD_BASELINE = {
+    "page1_aligned": 7,
+    "page1_total": 10,
+    "page1_state": "good",        # good / warn / bad
+    "page1_text": "strong",
+    "kg_present": False,
+    "negatives": 3,
+    "llm_mentions": 1,
+    "llm_runs": 1,
+    "llm_text": "1/1",
+    "llm_state": "good",
+    "llm_sub": "mentioned (baseline · Perplexity)",
+    "as_of": "audit baseline · 2026-04",
+}
+
 
 def _resolve_status(task, saved, auto_done):
     """Resolve the effective status for a task.
@@ -1807,8 +1824,12 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
     def kpi_color(state):
         return {"good": "var(--vm-green)", "warn": "#8c4500", "bad": "var(--vm-bad)", "muted": "var(--vm-muted)"}[state]
 
+    # Page 1 saturation
     if not audit_run:
-        page1_state, page1_text = "muted", "—"
+        page1_aligned = DASHBOARD_BASELINE["page1_aligned"]
+        page1_total = DASHBOARD_BASELINE["page1_total"]
+        page1_state = DASHBOARD_BASELINE["page1_state"]
+        page1_text = DASHBOARD_BASELINE["page1_text"] + " · baseline"
     elif page1_aligned >= 7:
         page1_state, page1_text = "good", "strong"
     elif page1_aligned >= 4:
@@ -1816,13 +1837,20 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
     else:
         page1_state, page1_text = "bad", "weak"
 
+    # Knowledge graph
     if not audit_run:
-        kg_state, kg_text = "muted", "—"
+        kg_present = DASHBOARD_BASELINE["kg_present"]
+        kg_state, kg_text = ("good", "present · baseline") if kg_present else ("bad", "missing · baseline")
     else:
         kg_state, kg_text = ("good", "present") if kg_present else ("bad", "missing")
 
+    # LLM mentions
     if llm_runs == 0:
-        llm_state, llm_text, llm_sub = "muted", "—", "no probes run yet"
+        llm_mentions = DASHBOARD_BASELINE["llm_mentions"]
+        llm_runs = DASHBOARD_BASELINE["llm_runs"]
+        llm_state = DASHBOARD_BASELINE["llm_state"]
+        llm_text = DASHBOARD_BASELINE["llm_text"]
+        llm_sub = DASHBOARD_BASELINE["llm_sub"]
     elif llm_mentions == llm_runs:
         llm_state, llm_text, llm_sub = "good", f"{llm_mentions}/{llm_runs}", "mentioned across all probes"
     elif llm_mentions > 0:
@@ -1830,8 +1858,11 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
     else:
         llm_state, llm_text, llm_sub = "bad", f"0/{llm_runs}", "not mentioned"
 
+    # Negative results
     if not audit_run:
-        neg_state, neg_text = "muted", "—"
+        negatives = DASHBOARD_BASELINE["negatives"]
+        neg_state = "bad" if negatives > 0 else "good"
+        neg_text = f"{negatives} · baseline"
     elif negatives == 0:
         neg_state, neg_text = "good", "0"
     else:
