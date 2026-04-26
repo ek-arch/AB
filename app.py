@@ -2877,7 +2877,7 @@ def render_step3(serp_result, pplx_result, openai_result, config):
             with head_cols[0]:
                 st.markdown(
                     f'<div style="font-size:13px; color:{priority_color[it["priority"]]}; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; padding-top:6px;">{priority_label[it["priority"]]}</div>'
-                    f'<div style="font-size:11px; color:var(--muted); letter-spacing:0.08em; padding-top:2px;" title="Effort: {effort_label.get(eff, "?")}">{effort_dot.get(eff, "●●●")} {effort_label.get(eff, "")}</div>',
+                    f'<div class="effort-row" style="font-size:11px; color:var(--muted); letter-spacing:0.08em; padding-top:2px;" title="Effort: {effort_label.get(eff, "?")}"><span class="effort-dots">{effort_dot.get(eff, "●●●")}</span> {effort_label.get(eff, "")}</div>',
                     unsafe_allow_html=True,
                 )
             with head_cols[1]:
