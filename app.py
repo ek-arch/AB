@@ -943,9 +943,10 @@ ACTION_CATEGORIES = [
                 "label": "Finextra Member Blog — self-publish under your profile",
                 "priority": 1,
                 "effort": 2,
+                "default_status": "in progress",
                 "topic": "\"How small fintechs rebuild infrastructure without 50-person engineering teams\" — Onicore POV",
                 "why": "Finextra has no public editor inbox for cold pitches. The realistic path that ranks page-1 for founder names is the free Member Blog: your own author profile + posts on finextra.com/blogposts.",
-                "action": "Register at finextra.com/register, complete the Member profile (headshot, company, bio, links). Publish first post via Member Blog. Author page goes live at finextra.com/blogs/<slug> and indexes within days. Editorial picks-up happen organically once you have 2-3 posts.",
+                "action": "Account already registered (rep management). Next: complete profile (headshot, company, bio, links), publish first post via Member Blog. Author page goes live at finextra.com/blogs/<slug>.",
                 "domains": ["finextra.com"],
             },
             {
@@ -970,9 +971,10 @@ ACTION_CATEGORIES = [
                 "label": "Banking Dive / Payments Dive — get quoted as a source",
                 "priority": 2,
                 "effort": 2,
+                "default_status": "in progress",
                 "topic": "Compliance / fraud-prevention angle — operational fintech infra commentary",
                 "why": "Banking Dive doesn't take guest pieces and rarely profiles individuals. Reliable path is being a named source in their own reporting.",
-                "action": "Sign up on Featured.com, Qwoted, and Help a B2B Writer (free). Answer 2-3 prompts/week tagged compliance/fintech. Banking Dive reporters use these. Each accepted quote = your name + Onicore in a Banking Dive byline.",
+                "action": "Per rep management — 'unique article for review' draft is in progress. Also sign up on Featured.com, Qwoted, Help a B2B Writer (free) and answer 2-3 prompts/week tagged compliance/fintech.",
                 "domains": ["bankingdive.com", "paymentsdive.com"],
             },
             {
@@ -988,9 +990,10 @@ ACTION_CATEGORIES = [
                 "label": "HackerNoon — contributor + 2 articles",
                 "priority": 3,
                 "effort": 2,
+                "default_status": "in progress",
                 "topic": "Technical post-mortems of building Onicore / Kolo. Long-form, code-light.",
                 "why": "Sign-up is open but every submission goes through editorial review (1-3 weeks, ~50% accept rate). Author page ranks for the name once you have 2+ posts.",
-                "action": "Register at hackernoon.com → submit first draft via the editor. Once accepted, the @username profile is live. Submit second piece within 30 days so the author page has weight.",
+                "action": "Per rep management — first article queued. Submit second piece within 30 days so the author page has weight (rotate from crypto.news, biweekly cadence).",
                 "domains": ["hackernoon.com"],
             },
             {
@@ -1040,8 +1043,9 @@ ACTION_CATEGORIES = [
                 "label": "Crunchbase person page",
                 "priority": 1,
                 "effort": 1,
+                "default_status": "done",
                 "why": "Always ranks for founder names. Drives entity recognition. Links to founded companies.",
-                "action": "crunchbase.com → sign up free → 'Add a person' → create profile, link Onicore + Nonbank.io + Kolo, add headshot + bio + LinkedIn. Pro account ($49/mo) only needed if editing existing org pages.",
+                "action": "✅ Already registered (rep management). Verify it links Onicore + Nonbank.io + Kolo, headshot + bio + LinkedIn are current; refresh quarterly.",
                 "domains": ["crunchbase.com"],
             },
             {
@@ -1049,55 +1053,61 @@ ACTION_CATEGORIES = [
                 "priority": 2,
                 "effort": 1,
                 "why": "10-min win. Ranks for technical founder names. Read by LLMs.",
-                "action": "github.com/andriibruiaka — fill bio, link bruiaka.com, pin 3 repos (even if just docs/specs).",
+                "action": "github.com/andriibruiaka — fill bio, link bruiaka.com, pin 3 repos (even if just docs/specs). Not in rep management; treat as still todo.",
                 "domains": ["github.com"],
             },
             {
                 "label": "AllMyLinks profile",
                 "priority": 3,
                 "effort": 1,
+                "default_status": "done",
                 "why": "Aggregator that ranks for the name. Acts as a meta-bio when nothing else exists yet.",
-                "action": "allmylinks.com/andriibruiaka — link every other profile. 5-min setup.",
+                "action": "✅ Already registered (rep management). Verify allmylinks.com/andriibruiaka links every active profile and is current.",
                 "domains": ["allmylinks.com"],
             },
             {
                 "label": "Hashnode author profile + 1 cross-post",
                 "priority": 3,
                 "effort": 1,
+                "default_status": "done",
                 "why": "Indexes fast, ranks well for technical author names.",
-                "action": "hashnode.com → claim @andriibruiaka. Cross-post 1 Substack article (use canonical URL).",
+                "action": "✅ Profile registered (rep management — biweekly article cadence). Verify @andriibruiaka and that latest Substack post is cross-posted.",
                 "domains": ["hashnode.com"],
             },
             {
                 "label": "Dev.to author profile + 1 cross-post",
                 "priority": 3,
                 "effort": 1,
+                "default_status": "done",
                 "why": "Same as Hashnode — author page ranks.",
-                "action": "dev.to/andriibruiaka. Cross-post the same article with canonical link to Substack.",
+                "action": "✅ Profile registered (rep management — biweekly article cadence). 'Fintech and Web3 are merging' published at dev.to/andriibruiaka.",
                 "domains": ["dev.to"],
             },
             {
                 "label": "Medium author profile + 1 cross-post",
                 "priority": 3,
                 "effort": 1,
+                "default_status": "done",
                 "why": "medium.com/@<name> ranks page-1 for many founder names.",
-                "action": "Set vanity URL to @andriibruiaka. Cross-post 1 cornerstone article with canonical to Substack.",
+                "action": "✅ Profile registered, monthly article updates per rep management. Confirm vanity URL @andriibruiaka and current canonical-back to Substack.",
                 "domains": ["medium.com"],
             },
             {
                 "label": "F6S profile",
                 "priority": 3,
                 "effort": 1,
+                "default_status": "done",
                 "why": "Startup-ecosystem directory, indexes fast for founder names.",
-                "action": "f6s.com → list all ventures + advisor roles + investor profile.",
+                "action": "✅ Already registered (rep management). Verify all ventures + advisor + investor sections are populated.",
                 "domains": ["f6s.com"],
             },
             {
                 "label": "X / Twitter — verified handle, complete bio",
                 "priority": 2,
                 "effort": 1,
+                "default_status": "in progress",
                 "why": "Profile cards appear in some Google name searches and feed Grok/ChatGPT.",
-                "action": "Confirm @ matches the brand. Bio = name + role + company + link to bruiaka.com. Verified ($8/mo) noticeably helps entity recognition.",
+                "action": "Handle exists. Verify bio = name + role + company + link to bruiaka.com. Verified ($8/mo) noticeably helps entity recognition — turn on if not already.",
                 "domains": ["twitter.com", "x.com"],
             },
             {
@@ -1120,8 +1130,9 @@ ACTION_CATEGORIES = [
                 "label": "Reddit — earn karma, one organic mention",
                 "priority": 3,
                 "effort": 5,
+                "default_status": "in progress",
                 "why": "LLMs (especially ChatGPT) lean heavily on Reddit. One thread can move AI answers.",
-                "action": "Multi-week play: build account karma by commenting in r/fintech / r/startups / r/CryptoCurrency for 4 weeks. Then post a Show & Tell or AMA tied to a real launch. Cold posting w/o karma gets shadow-banned.",
+                "action": "Account purchased per rep management ('set up/buy reddit acc, weekly comments'). Continue: 4 weeks of karma in r/fintech / r/startups / r/CryptoCurrency, then a Show & Tell or AMA tied to a launch.",
                 "domains": ["reddit.com"],
             },
             {
@@ -1151,8 +1162,9 @@ ACTION_CATEGORIES = [
                 "label": "Substack 'About' page polish",
                 "priority": 2,
                 "effort": 2,
+                "default_status": "in progress",
                 "why": "About page is what LLMs hit for bio queries. Make it crawlable and entity-tagged.",
-                "action": "Substack dashboard → Settings → About → name in H1, 3-paragraph professional bio, links to all founded companies + profiles. ~30 min.",
+                "action": "Substack registered (rep management — 4 articles already published incl. 'From seed phrases to Face ID', 'Why 80% of crypto users still avoid self-custody', 'What 2025 taught us about crypto adoption'). Verify About page: name in H1, 3-paragraph bio, links to all founded companies.",
                 "domains": ["substack.com"],
             },
             {
@@ -1160,8 +1172,8 @@ ACTION_CATEGORIES = [
                 "priority": 1,
                 "effort": 3,
                 "topic": "\"Andrii Bruiaka — what I work on\" — name in title, URL slug, H1, plus links to bruiaka.com and every owned profile",
-                "why": "Substack ranks fast and acts as a canonical bio answering 'who is...' queries.",
-                "action": "Title: \"Andrii Bruiaka: building fintech infrastructure\". URL slug /p/andrii-bruiaka. Internal-link every profile URL. ~3 hours including writing.",
+                "why": "Substack ranks fast and acts as a canonical bio answering 'who is...' queries. Articles published so far are topical — still missing the explicit bio-canonical post.",
+                "action": "Write a dedicated bio post (separate from the topic articles already on Substack). Title: \"Andrii Bruiaka: building fintech infrastructure\". URL slug /p/andrii-bruiaka. Internal-link every profile URL. ~3 hours.",
                 "domains": ["substack.com"],
             },
             {
@@ -1511,7 +1523,8 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
                 continue
             saved = states.get(t["label"], {})
             auto_done = auto_check_task(t, serp_urls, citation_urls)
-            status = saved.get("status", "done" if auto_done else "todo")
+            fallback = t.get("default_status") or ("done" if auto_done else "todo")
+            status = saved.get("status", fallback)
             counts[status] += 1
             if status != "done":
                 quick_wins.append(
@@ -1519,7 +1532,7 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
                 )
         for c in custom.get(cat["id"], []):
             saved = states.get(c["label"], {})
-            status = saved.get("status", "todo")
+            status = saved.get("status", c.get("default_status", "todo"))
             counts[status] += 1
             if status != "done":
                 quick_wins.append(
@@ -1633,7 +1646,6 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
               <div><span style="font-weight:600; color:var(--vm-ink);">{counts['in progress']}</span> <span style="color:var(--vm-muted);">doing</span></div>
               <div><span style="font-weight:600; color:var(--vm-ink);">{counts['todo']}</span> <span style="color:var(--vm-muted);">todo</span></div>
             </div>
-            <a href="#step-3-action" style="display:inline-block; margin-top:14px; font-size:12px; color:var(--vm-blue); text-decoration:none; font-weight:500;">Open action plan ↓</a>
           </div>
           <div style="border:1px solid var(--vm-line); border-radius:10px; padding:16px 18px; background:#fff;">
             <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
@@ -1646,6 +1658,21 @@ def render_dashboard(serp_result, pplx_result, openai_result, config):
         """,
         unsafe_allow_html=True,
     )
+
+    # Real Streamlit buttons for navigation (anchor links can't switch views)
+    nav_cols = st.columns([1, 1, 1, 4])
+    with nav_cols[0]:
+        if st.button("→ Action plan", key="dash_to_actions", use_container_width=True):
+            st.session_state.current_view = "03 · Action plan"
+            st.rerun()
+    with nav_cols[1]:
+        if st.button("→ Google search", key="dash_to_google", use_container_width=True):
+            st.session_state.current_view = "01 · Google search"
+            st.rerun()
+    with nav_cols[2]:
+        if st.button("→ LLM probes", key="dash_to_llm", use_container_width=True):
+            st.session_state.current_view = "02 · LLM visibility"
+            st.rerun()
 
 
 # ============================================================
@@ -2033,6 +2060,16 @@ def render_step3(serp_result, pplx_result, openai_result, config):
     effort_label = {1: "5–30 min", 2: "<2 h", 3: "½ day", 4: "multi-day", 5: "ongoing/weeks"}
     effort_dot = {1: "●", 2: "●●", 3: "●●●", 4: "●●●●", 5: "●●●●●"}
 
+    # Sub-navigation: filter by category
+    cat_options = ["All categories"] + [c["title"] for c in ACTION_CATEGORIES]
+    selected_cat = st.radio(
+        "Filter by category",
+        cat_options,
+        horizontal=True,
+        key="action_cat_filter",
+        label_visibility="collapsed",
+    )
+
     sort_mode = st.radio(
         "Order tasks by",
         ["Status + priority (default)", "Quickest wins first (effort ↑)"],
@@ -2131,6 +2168,10 @@ def render_step3(serp_result, pplx_result, openai_result, config):
     for category in ACTION_CATEGORIES:
         cat_id = category["id"]
 
+        # Skip categories that don't match the sub-nav filter
+        if selected_cat != "All categories" and selected_cat != category["title"]:
+            continue
+
         st.markdown(
             f"""
             <a id="cat-{escape_html(cat_id)}"></a>
@@ -2149,10 +2190,11 @@ def render_step3(serp_result, pplx_result, openai_result, config):
                 continue
             saved = states.get(t["label"], {})
             auto_done = auto_check_task(t, serp_urls, citation_urls)
-            default_status = "done" if auto_done else "todo"
+            # Default precedence: explicit default_status > auto-detected > "todo"
+            fallback = t.get("default_status") or ("done" if auto_done else "todo")
             items.append({
                 **t,
-                "status": saved.get("status", default_status),
+                "status": saved.get("status", fallback),
                 "url": saved.get("url", ""),
                 "notes": saved.get("notes", ""),
                 "auto_present": auto_done,
@@ -2162,7 +2204,7 @@ def render_step3(serp_result, pplx_result, openai_result, config):
             saved = states.get(c["label"], {})
             items.append({
                 **c,
-                "status": saved.get("status", "todo"),
+                "status": saved.get("status", c.get("default_status", "todo")),
                 "url": saved.get("url", ""),
                 "notes": saved.get("notes", ""),
                 "auto_present": False,
@@ -2170,7 +2212,8 @@ def render_step3(serp_result, pplx_result, openai_result, config):
             })
 
         if sort_mode.startswith("Quickest"):
-            items.sort(key=lambda i: (status_order[i["status"]], i.get("effort", 3), i["priority"]))
+            # Effort-first so quick wins visibly float to top regardless of status
+            items.sort(key=lambda i: (i.get("effort", 3), status_order[i["status"]], i["priority"]))
         else:
             items.sort(key=lambda i: (status_order[i["status"]], i["priority"], i.get("effort", 3)))
 
