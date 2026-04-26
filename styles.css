@@ -264,17 +264,61 @@ html, body, .stApp { color: var(--vm-body); }
   border-color: var(--vm-blue-deep) !important;
 }
 
-/* ---------- Drop legacy expander uppercase / wide tracking ---------- */
+/* ---------- Expander header — readable label, real chevron ---------- */
 .stApp .streamlit-expanderHeader,
 .stApp [data-testid="stExpander"] summary,
 .stApp [data-testid="stExpander"] details > summary,
+.stApp [data-testid="stExpander"] details > summary *,
+.stApp [data-testid="stExpander"] [data-testid="stExpanderToggleIcon"] + *,
 .stApp [data-testid="stExpander"] details > summary > span {
   font-family: var(--vm-font) !important;
   text-transform: none !important;
   letter-spacing: -0.005em !important;
   color: var(--vm-ink) !important;
   font-size: 14px !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+  -webkit-text-fill-color: var(--vm-ink) !important;
+}
+
+/* The expander box itself: subtle border + light fill so the header is visible */
+.stApp [data-testid="stExpander"] {
+  border: 1px solid var(--vm-line) !important;
+  border-radius: 10px !important;
+  background: var(--vm-panel) !important;
+  margin: 8px 0 !important;
+}
+.stApp [data-testid="stExpander"] details > summary {
+  padding: 12px 14px !important;
+  background: var(--vm-panel) !important;
+  border-radius: 10px !important;
+}
+.stApp [data-testid="stExpander"] details[open] > summary {
+  background: var(--vm-panel-blue) !important;
+  border-bottom: 1px solid var(--vm-line) !important;
+  border-radius: 10px 10px 0 0 !important;
+}
+.stApp [data-testid="stExpander"] details > div {
+  padding: 12px 14px !important;
+  background: #fff !important;
+  border-radius: 0 0 10px 10px !important;
+}
+
+/* Chevron always visible (even if the icon font failed to load, use ASCII fallback) */
+.stApp [data-testid="stExpander"] details > summary [data-testid="stExpanderToggleIcon"]::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--vm-blue);
+  transition: transform 120ms;
+}
+.stApp [data-testid="stExpander"] details[open] > summary [data-testid="stExpanderToggleIcon"]::before {
+  transform: rotate(90deg);
+}
+.stApp [data-testid="stExpander"] details > summary [data-testid="stExpanderToggleIcon"] {
+  font-size: 0 !important;  /* hide the broken material text */
+  width: auto !important;
+  height: auto !important;
 }
 
 /* ---------- Drop the giant uppercase tracked labels everywhere ---------- */

@@ -1342,14 +1342,6 @@ ACTION_CATEGORIES = [
                 "domains": ["wikidata.org"],
             },
             {
-                "label": "Monthly Medium cross-post",
-                "priority": 2,
-                "effort": 2,
-                "why": "Reach + author-page weight. Cross-post with canonical link back to Substack.",
-                "action": "After each Substack post, paste into Medium → Story Settings → 'Import a story' or set canonical. ~20 min.",
-                "domains": ["medium.com"],
-            },
-            {
                 "label": "Monthly tier-1 outlet pitch (1 outbound)",
                 "priority": 1,
                 "effort": 3,
@@ -2105,6 +2097,17 @@ def render_strategy():
     # Each step is implemented as a standalone function (defined below
     # render_strategy) so navigation is a clean view-switch.
     # ============================================================
+    # On any non-Overview view, render a sticky "← Back to overview" button
+    # at the top so mobile users always have a way back.
+    if view != "Overview":
+        def _back_to_overview():
+            st.session_state.view_radio = "Overview"
+        st.button(
+            "← Back to overview",
+            key="back_to_overview",
+            on_click=_back_to_overview,
+        )
+
     if view == "01 · Google search":
         render_step1(primary_task, serp_result, st.session_state.config)
         return
