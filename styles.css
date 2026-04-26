@@ -125,13 +125,22 @@ html, body, .stApp { color: var(--vm-body); }
   font-family: var(--vm-font) !important;
   color: var(--vm-blue) !important;
   font-weight: 600 !important;
+  font-size: 28px !important;
   letter-spacing: -0.025em !important;
+  line-height: 1 !important;
 }
 .stApp .step-title {
   font-family: var(--vm-font) !important;
   color: var(--vm-ink) !important;
   font-weight: 600 !important;
+  font-size: 26px !important;
   letter-spacing: -0.02em !important;
+  line-height: 1 !important;
+}
+.stApp .step-block { margin: 36px 0 8px !important; padding-top: 20px !important; }
+.stApp .step-block.first { padding-top: 4px !important; margin-top: 8px !important; }
+.stApp .query-text {
+  font-size: 36px !important;
 }
 .stApp .saturation-number, .stApp .legend-count, .stApp .kg-title,
 .stApp .welcome-title, .stApp .task-group-label, .stApp .brand-mark {
